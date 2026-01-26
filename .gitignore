@@ -16,6 +16,9 @@ bt-bot
 # 环境变量
 .env
 
+# 配置文件（包含敏感信息）
+config.yaml
+
 # 日志
 *.log
 
