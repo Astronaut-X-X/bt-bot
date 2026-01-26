@@ -61,6 +61,9 @@ bt-bot/
 │   ├── aboutHandler.go  # /about 命令处理
 │   ├── messageHandler.go # 普通消息处理
 │   └── unknownHandler.go # 未知命令处理
+├── service/             # 服务模块
+│   ├── torrent.go       # 磁力链接解析服务
+│   └── torrent_test.go  # 磁力链接解析测试
 ├── utils/               # 工具包
 │   └── config.go        # 配置加载模块
 ├── .gitignore           # Git 忽略文件
@@ -99,8 +102,41 @@ bot:
 
 - Go 1.21+
 - github.com/go-telegram-bot-api/telegram-bot-api/v5
+- github.com/anacrolix/torrent (用于磁力链接解析)
 - gopkg.in/yaml.v3
 - golang.org/x/net (用于代理支持)
+
+## 功能模块
+
+### 磁力链接解析服务
+
+`service/torrent.go` 提供了磁力链接解析功能：
+
+- `ParseMagnetLink(magnetLink string)`: 解析磁力链接，返回文件信息、大小、tracker 等
+- `ParseTorrentFile(torrentPath string)`: 解析 torrent 文件
+
+使用示例：
+```go
+service, err := service.NewTorrentService()
+if err != nil {
+    log.Fatal(err)
+}
+defer service.Close()
+
+info, err := service.ParseMagnetLink("magnet:?xt=urn:btih:...")
+if err != nil {
+    log.Fatal(err)
+}
+
+fmt.Printf("名称: %s\n", info.Name)
+fmt.Printf("总大小: %d 字节\n", info.TotalLength)
+fmt.Printf("文件数: %d\n", len(info.Files))
+```
+
+运行测试：
+```bash
+go test ./service -v
+```
 
 ## 常见问题
 

@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"bt-bot/handler"
 	"bt-bot/utils"
@@ -127,6 +128,8 @@ func (s *Server) Run() error {
 				handler.HelpHandler(s.bot, msg)
 			case "echo":
 				handler.EchoHandler(s.bot, msg)
+			case "magnet":
+				handler.MagnetHandler(s.bot, msg)
 			case "about":
 				handler.AboutHandler(s.bot, msg)
 			default:
@@ -136,10 +139,20 @@ func (s *Server) Run() error {
 		}
 
 		// 处理普通文本消息
-		handler.MessageHandler(s.bot, msg)
+		// 检查是否包含磁力链接
+		if containsMagnetLink(msg.Text) {
+			handler.MagnetHandler(s.bot, msg)
+		} else {
+			handler.MessageHandler(s.bot, msg)
+		}
 	}
 
 	return nil
+}
+
+// containsMagnetLink 检查文本是否包含磁力链接
+func containsMagnetLink(text string) bool {
+	return text != "" && strings.Contains(text, "magnet:")
 }
 
 // GetBot 获取 bot 实例
