@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/anacrolix/torrent"
@@ -23,7 +24,7 @@ func NewTorrentService() (*TorrentService, error) {
 	// 创建客户端
 	client, err := torrent.NewClient(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("创建 torrent 客户端失败: %w", err)
+		return nil, fmt.Errorf("创建 torrent 客户端失败: %w; 详细错误信息: %+v", err, err)
 	}
 
 	return &TorrentService{
@@ -53,7 +54,7 @@ func (ts *TorrentService) ParseMagnetLink(magnetLink string) (*TorrentInfo, erro
 	// 添加磁力链接到客户端
 	t, err := ts.client.AddMagnet(magnetLink)
 	if err != nil {
-		return nil, fmt.Errorf("添加磁力链接失败: %w", err)
+		return nil, fmt.Errorf("添加磁力链接失败: %w; 详细错误信息: %+v; 磁力链接内容: %s", err, err, magnetLink)
 	}
 
 	// 等待元信息获取完成（设置超时）
@@ -67,14 +68,14 @@ func (ts *TorrentService) ParseMagnetLink(magnetLink string) (*TorrentInfo, erro
 	case <-ctx.Done():
 		// 超时
 		t.Drop()
-		return nil, fmt.Errorf("获取磁力链接元信息超时")
+		return nil, fmt.Errorf("获取磁力链接元信息超时. Magnet: %s. 等待时长: %v, 错误: %w, 详细错误信息: %+v", magnetLink, 30*time.Second, ctx.Err(), ctx.Err())
 	}
 
 	// 获取元信息
 	info := t.Info()
 	if info == nil {
 		t.Drop()
-		return nil, fmt.Errorf("无法获取磁力链接元信息")
+		return nil, fmt.Errorf("无法获取磁力链接元信息，Info为nil. Magnet: %s", magnetLink)
 	}
 
 	// 构建文件列表
@@ -121,13 +122,17 @@ func (ts *TorrentService) ParseTorrentFile(torrentPath string) (*TorrentInfo, er
 	// 读取 torrent 文件
 	mi, err := metainfo.LoadFromFile(torrentPath)
 	if err != nil {
-		return nil, fmt.Errorf("读取 torrent 文件失败: %w", err)
+		// 读取文件是否存在
+		if _, statErr := os.Stat(torrentPath); statErr != nil {
+			return nil, fmt.Errorf("读取 torrent 文件失败: %w; 详细错误信息: %+v, 目标路径: %s, 文件状态错误: %v", err, err, torrentPath, statErr)
+		}
+		return nil, fmt.Errorf("读取 torrent 文件失败: %w; 详细错误信息: %+v, 目标路径: %s", err, err, torrentPath)
 	}
 
 	// 解析元信息
 	info, err := mi.UnmarshalInfo()
 	if err != nil {
-		return nil, fmt.Errorf("解析 torrent 文件元信息失败: %w", err)
+		return nil, fmt.Errorf("解析 torrent 文件元信息失败: %w; 详细错误信息: %+v, 文件路径: %s", err, err, torrentPath)
 	}
 
 	// 构建文件列表
