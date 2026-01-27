@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/url"
 	"os"
 	"strings"
@@ -89,6 +90,7 @@ func (ts *TorrentService) ParseMagnetLink(magnetLink string) (*TorrentInfo, erro
 			// 先尝试从缓存获取
 			cachedInfo, cacheErr := ts.cache.Get(infoHash)
 			if cacheErr == nil && cachedInfo != nil {
+				log.Printf("✅ 缓存命中: InfoHash=%s, Name=%s", infoHash, cachedInfo.Name)
 				return cachedInfo, nil
 			}
 		}
@@ -161,8 +163,9 @@ func (ts *TorrentService) ParseMagnetLink(magnetLink string) (*TorrentInfo, erro
 	// 解析成功后立即存储到缓存
 	if ts.cache != nil {
 		if err := ts.cache.Set(torrentInfo.InfoHash, torrentInfo); err != nil {
-			// 缓存失败不影响主流程，但记录错误以便调试
-			// 这里不返回错误，因为解析已经成功
+			log.Printf("❌ 缓存存储失败: InfoHash=%s, Error=%v", torrentInfo.InfoHash, err)
+		} else {
+			log.Printf("💾 缓存已存储: InfoHash=%s, Name=%s, Files=%d", torrentInfo.InfoHash, torrentInfo.Name, len(torrentInfo.Files))
 		}
 	}
 
@@ -186,6 +189,7 @@ func (ts *TorrentService) ParseTorrentFile(torrentPath string) (*TorrentInfo, er
 	if ts.cache != nil {
 		cachedInfo, cacheErr := ts.cache.Get(infoHash)
 		if cacheErr == nil && cachedInfo != nil {
+			log.Printf("✅ 缓存命中: InfoHash=%s, Name=%s", infoHash, cachedInfo.Name)
 			return cachedInfo, nil
 		}
 	}
@@ -231,8 +235,9 @@ func (ts *TorrentService) ParseTorrentFile(torrentPath string) (*TorrentInfo, er
 	// 解析成功后立即存储到缓存
 	if ts.cache != nil {
 		if err := ts.cache.Set(torrentInfo.InfoHash, torrentInfo); err != nil {
-			// 缓存失败不影响主流程，但记录错误以便调试
-			// 这里不返回错误，因为解析已经成功
+			log.Printf("❌ 缓存存储失败: InfoHash=%s, Error=%v", torrentInfo.InfoHash, err)
+		} else {
+			log.Printf("💾 缓存已存储: InfoHash=%s, Name=%s, Files=%d", torrentInfo.InfoHash, torrentInfo.Name, len(torrentInfo.Files))
 		}
 	}
 
