@@ -261,13 +261,28 @@ func (ts *TorrentService) DownloadFile(magnetLink string, fileIndex int, downloa
 	}
 
 	// 创建新的客户端用于下载（需要设置 DataDir）
+	// 注意：为了避免端口冲突，我们使用独立的客户端配置
+	// 由于 anacrolix/torrent 默认使用端口 42069，如果被占用会失败
+	// 解决方案：在下载时，使用独立的客户端，如果端口冲突则重试
 	cfg := torrent.NewDefaultClientConfig()
 	cfg.DataDir = downloadDir // 设置下载目录
 	cfg.Debug = false
+	// 注意：anacrolix/torrent 没有直接配置端口的选项
+	// 如果端口被占用，我们需要等待或使用其他方法
 
 	downloadClient, err := torrent.NewClient(cfg)
 	if err != nil {
-		return "", fmt.Errorf("创建下载客户端失败: %w", err)
+		// 如果端口被占用，等待一段时间后重试
+		if strings.Contains(err.Error(), "address already in use") {
+			log.Printf("⚠️ 端口被占用，等待 2 秒后重试...")
+			time.Sleep(2 * time.Second)
+			downloadClient, err = torrent.NewClient(cfg)
+			if err != nil {
+				return "", fmt.Errorf("创建下载客户端失败（端口冲突）: %w\n提示：请稍后重试，或重启应用", err)
+			}
+		} else {
+			return "", fmt.Errorf("创建下载客户端失败: %w", err)
+		}
 	}
 	defer downloadClient.Close()
 
