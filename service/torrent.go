@@ -158,9 +158,12 @@ func (ts *TorrentService) ParseMagnetLink(magnetLink string) (*TorrentInfo, erro
 	// 清理资源
 	t.Drop()
 
-	// 存储到缓存（如果启用缓存）
+	// 解析成功后立即存储到缓存
 	if ts.cache != nil {
-		_ = ts.cache.Set(torrentInfo.InfoHash, torrentInfo) // 忽略缓存错误，不影响主流程
+		if err := ts.cache.Set(torrentInfo.InfoHash, torrentInfo); err != nil {
+			// 缓存失败不影响主流程，但记录错误以便调试
+			// 这里不返回错误，因为解析已经成功
+		}
 	}
 
 	return torrentInfo, nil
@@ -176,6 +179,15 @@ func (ts *TorrentService) ParseTorrentFile(torrentPath string) (*TorrentInfo, er
 			return nil, fmt.Errorf("读取 torrent 文件失败: %w; 详细错误信息: %+v, 目标路径: %s, 文件状态错误: %v", err, err, torrentPath, statErr)
 		}
 		return nil, fmt.Errorf("读取 torrent 文件失败: %w; 详细错误信息: %+v, 目标路径: %s", err, err, torrentPath)
+	}
+
+	// 获取 InfoHash，先检查缓存
+	infoHash := mi.HashInfoBytes().String()
+	if ts.cache != nil {
+		cachedInfo, cacheErr := ts.cache.Get(infoHash)
+		if cacheErr == nil && cachedInfo != nil {
+			return cachedInfo, nil
+		}
 	}
 
 	// 解析元信息
@@ -207,13 +219,21 @@ func (ts *TorrentService) ParseTorrentFile(torrentPath string) (*TorrentInfo, er
 
 	// 构建返回信息
 	torrentInfo := &TorrentInfo{
-		InfoHash:    mi.HashInfoBytes().String(),
+		InfoHash:    infoHash,
 		Name:        info.Name,
 		TotalLength: info.TotalLength(),
 		Files:       files,
 		Trackers:    trackers,
 		PieceLength: info.PieceLength,
 		NumPieces:   info.NumPieces(),
+	}
+
+	// 解析成功后立即存储到缓存
+	if ts.cache != nil {
+		if err := ts.cache.Set(torrentInfo.InfoHash, torrentInfo); err != nil {
+			// 缓存失败不影响主流程，但记录错误以便调试
+			// 这里不返回错误，因为解析已经成功
+		}
 	}
 
 	return torrentInfo, nil
