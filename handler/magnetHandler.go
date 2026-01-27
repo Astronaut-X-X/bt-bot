@@ -5,9 +5,35 @@ import (
 	"strings"
 
 	"bt-bot/service"
+	"bt-bot/utils"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
+
+var torrentCache service.TorrentCache
+
+// InitCache 初始化缓存服务
+func InitCache(config *utils.Config) error {
+	if !config.Cache.Enabled {
+		torrentCache = nil
+		return nil
+	}
+
+	// 设置默认缓存目录
+	cacheDir := config.Cache.Dir
+	if cacheDir == "" {
+		cacheDir = "./cache/torrents"
+	}
+
+	// 创建文件缓存
+	cache, err := service.NewFileCache(cacheDir)
+	if err != nil {
+		return fmt.Errorf("初始化缓存服务失败: %w", err)
+	}
+
+	torrentCache = cache
+	return nil
+}
 
 // MagnetHandler 处理磁力链接解析
 func MagnetHandler(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
@@ -25,8 +51,8 @@ func MagnetHandler(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
 	processingMsg := tgbotapi.NewMessage(chatID, "⏳ 正在解析磁力链接，请稍候...")
 	sentMsg, _ := bot.Send(processingMsg)
 
-	// 创建 torrent 服务
-	torrentService, err := service.NewTorrentService()
+	// 创建 torrent 服务（传入缓存）
+	torrentService, err := service.NewTorrentService(torrentCache)
 	if err != nil {
 		errorText := fmt.Sprintf("❌ 创建解析服务失败: %v", err)
 		editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, errorText)

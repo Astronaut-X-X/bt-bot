@@ -3,7 +3,9 @@ package service
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/anacrolix/torrent"
@@ -13,10 +15,11 @@ import (
 // TorrentService 磁力链接服务
 type TorrentService struct {
 	client *torrent.Client
+	cache  TorrentCache // 缓存服务
 }
 
 // NewTorrentService 创建新的 TorrentService 实例
-func NewTorrentService() (*TorrentService, error) {
+func NewTorrentService(cache TorrentCache) (*TorrentService, error) {
 	// 创建 torrent 客户端配置
 	cfg := torrent.NewDefaultClientConfig()
 	cfg.DataDir = "" // 不保存文件到磁盘，仅解析元信息
@@ -30,7 +33,32 @@ func NewTorrentService() (*TorrentService, error) {
 
 	return &TorrentService{
 		client: client,
+		cache:  cache,
 	}, nil
+}
+
+// extractInfoHashFromMagnet 从磁力链接中提取 InfoHash
+func extractInfoHashFromMagnet(magnetLink string) (string, error) {
+	// 解析 URL
+	u, err := url.Parse(magnetLink)
+	if err != nil {
+		return "", fmt.Errorf("解析磁力链接失败: %w", err)
+	}
+
+	// 查找 xt 参数（通常是 urn:btih:XXXXX）
+	xt := u.Query().Get("xt")
+	if xt == "" {
+		return "", fmt.Errorf("磁力链接中未找到 xt 参数")
+	}
+
+	// 提取 InfoHash（格式：urn:btih:XXXXX）
+	parts := strings.Split(xt, ":")
+	if len(parts) < 3 || parts[0] != "urn" || parts[1] != "btih" {
+		return "", fmt.Errorf("无效的 xt 参数格式: %s", xt)
+	}
+
+	infoHash := strings.ToLower(parts[2])
+	return infoHash, nil
 }
 
 // TorrentInfo 磁力链接信息
@@ -52,6 +80,20 @@ type TorrentFileInfo struct {
 
 // ParseMagnetLink 解析磁力链接内容
 func (ts *TorrentService) ParseMagnetLink(magnetLink string) (*TorrentInfo, error) {
+	// 尝试从磁力链接中提取 InfoHash
+	var infoHash string
+	var err error
+	if ts.cache != nil {
+		infoHash, err = extractInfoHashFromMagnet(magnetLink)
+		if err == nil {
+			// 先尝试从缓存获取
+			cachedInfo, cacheErr := ts.cache.Get(infoHash)
+			if cacheErr == nil && cachedInfo != nil {
+				return cachedInfo, nil
+			}
+		}
+	}
+
 	// 添加磁力链接到客户端
 	t, err := ts.client.AddMagnet(magnetLink)
 	if err != nil {
@@ -115,6 +157,11 @@ func (ts *TorrentService) ParseMagnetLink(magnetLink string) (*TorrentInfo, erro
 
 	// 清理资源
 	t.Drop()
+
+	// 存储到缓存（如果启用缓存）
+	if ts.cache != nil {
+		_ = ts.cache.Set(torrentInfo.InfoHash, torrentInfo) // 忽略缓存错误，不影响主流程
+	}
 
 	return torrentInfo, nil
 }

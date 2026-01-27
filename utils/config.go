@@ -9,7 +9,8 @@ import (
 
 // Config 配置结构体
 type Config struct {
-	Bot BotConfig `yaml:"bot"`
+	Bot   BotConfig   `yaml:"bot"`
+	Cache CacheConfig `yaml:"cache"`
 }
 
 // BotConfig Bot 配置
@@ -18,6 +19,12 @@ type BotConfig struct {
 	Debug   bool   `yaml:"debug"`
 	Timeout int    `yaml:"timeout"`
 	Proxy   string `yaml:"proxy"` // 代理地址，格式: http://host:port 或 socks5://host:port
+}
+
+// CacheConfig 缓存配置
+type CacheConfig struct {
+	Enabled bool   `yaml:"enabled"` // 是否启用缓存
+	Dir     string `yaml:"dir"`     // 缓存目录
 }
 
 // LoadConfig 加载配置文件

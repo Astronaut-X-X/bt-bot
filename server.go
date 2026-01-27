@@ -46,6 +46,13 @@ func NewServer(config *utils.Config) (*Server, error) {
 
 	log.Printf("已授权为 %s", bot.Self.UserName)
 
+	// 初始化缓存服务
+	if err := handler.InitCache(config); err != nil {
+		log.Printf("警告: 初始化缓存服务失败: %v", err)
+	} else if config.Cache.Enabled {
+		log.Printf("缓存服务已启用，缓存目录: %s", config.Cache.Dir)
+	}
+
 	return &Server{
 		bot:    bot,
 		config: config,

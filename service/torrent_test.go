@@ -5,7 +5,7 @@ import (
 )
 
 func TestNewTorrentService(t *testing.T) {
-	service, err := NewTorrentService()
+	service, err := NewTorrentService(nil) // 测试时不使用缓存
 	if err != nil {
 		t.Fatalf("创建 TorrentService 失败: %v", err)
 	}
@@ -21,7 +21,7 @@ func TestNewTorrentService(t *testing.T) {
 }
 
 func TestParseMagnetLink(t *testing.T) {
-	service, err := NewTorrentService()
+	service, err := NewTorrentService(nil) // 测试时不使用缓存
 	if err != nil {
 		t.Fatalf("创建 TorrentService 失败: %v", err)
 	}
@@ -81,7 +81,7 @@ func TestParseMagnetLink(t *testing.T) {
 }
 
 func TestParseMagnetLink_InvalidLink(t *testing.T) {
-	service, err := NewTorrentService()
+	service, err := NewTorrentService(nil) // 测试时不使用缓存
 	if err != nil {
 		t.Fatalf("创建 TorrentService 失败: %v", err)
 	}
@@ -97,7 +97,7 @@ func TestParseMagnetLink_InvalidLink(t *testing.T) {
 }
 
 func TestParseMagnetLink_EmptyLink(t *testing.T) {
-	service, err := NewTorrentService()
+	service, err := NewTorrentService(nil) // 测试时不使用缓存
 	if err != nil {
 		t.Fatalf("创建 TorrentService 失败: %v", err)
 	}

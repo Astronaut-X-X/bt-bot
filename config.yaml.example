@@ -5,3 +5,7 @@ bot:
   # proxy: "http://127.0.0.1:7890"  # 可选：HTTP/HTTPS 代理
   # proxy: "socks5://127.0.0.1:1080"  # 可选：SOCKS5 代理
 
+cache:
+  enabled: true              # 是否启用缓存
+  dir: "./cache/torrents"    # 缓存目录
+
