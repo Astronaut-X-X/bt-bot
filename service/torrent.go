@@ -8,10 +8,16 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/anacrolix/torrent"
 	"github.com/anacrolix/torrent/metainfo"
+)
+
+var (
+	globalClientMutex sync.Mutex      // 全局客户端互斥锁
+	globalClient      *torrent.Client // 全局客户端（用于避免端口冲突）
 )
 
 // TorrentService 磁力链接服务
@@ -260,31 +266,60 @@ func (ts *TorrentService) DownloadFile(magnetLink string, fileIndex int, downloa
 		return "", fmt.Errorf("创建下载目录失败: %w", err)
 	}
 
+	// 使用全局互斥锁确保同一时间只有一个客户端在运行
+	globalClientMutex.Lock()
+	defer globalClientMutex.Unlock()
+
+	// 先关闭全局客户端（如果存在），释放端口
+	if globalClient != nil {
+		log.Printf("🔒 关闭全局客户端以释放端口...")
+		globalClient.Close()
+		globalClient = nil
+		// 等待端口完全释放
+		time.Sleep(2 * time.Second)
+	}
+
+	// 先关闭当前服务的客户端（如果存在）
+	if ts.client != nil {
+		log.Printf("🔒 关闭解析客户端以释放端口...")
+		ts.client.Close()
+		ts.client = nil
+		// 等待端口完全释放
+		time.Sleep(1 * time.Second)
+	}
+
 	// 创建新的客户端用于下载（需要设置 DataDir）
-	// 注意：为了避免端口冲突，我们使用独立的客户端配置
-	// 由于 anacrolix/torrent 默认使用端口 42069，如果被占用会失败
-	// 解决方案：在下载时，使用独立的客户端，如果端口冲突则重试
 	cfg := torrent.NewDefaultClientConfig()
 	cfg.DataDir = downloadDir // 设置下载目录
 	cfg.Debug = false
-	// 注意：anacrolix/torrent 没有直接配置端口的选项
-	// 如果端口被占用，我们需要等待或使用其他方法
 
-	downloadClient, err := torrent.NewClient(cfg)
-	if err != nil {
-		// 如果端口被占用，等待一段时间后重试
+	// 尝试创建下载客户端，如果端口冲突则重试
+	var downloadClient *torrent.Client
+	var err error
+	maxRetries := 3
+	for i := 0; i < maxRetries; i++ {
+		downloadClient, err = torrent.NewClient(cfg)
+		if err == nil {
+			globalClient = downloadClient // 保存到全局变量
+			break
+		}
+
 		if strings.Contains(err.Error(), "address already in use") {
-			log.Printf("⚠️ 端口被占用，等待 2 秒后重试...")
-			time.Sleep(2 * time.Second)
-			downloadClient, err = torrent.NewClient(cfg)
-			if err != nil {
-				return "", fmt.Errorf("创建下载客户端失败（端口冲突）: %w\n提示：请稍后重试，或重启应用", err)
+			if i < maxRetries-1 {
+				waitTime := time.Duration(i+1) * 2 * time.Second
+				log.Printf("⚠️ 端口被占用，等待 %v 后重试 (%d/%d)...", waitTime, i+1, maxRetries)
+				time.Sleep(waitTime)
+			} else {
+				return "", fmt.Errorf("创建下载客户端失败（端口冲突，已重试 %d 次）: %w\n提示：请稍后重试，或重启应用", maxRetries, err)
 			}
 		} else {
 			return "", fmt.Errorf("创建下载客户端失败: %w", err)
 		}
 	}
-	defer downloadClient.Close()
+	defer func() {
+		downloadClient.Close()
+		globalClient = nil // 清除全局客户端
+	}()
 
 	// 添加磁力链接到客户端
 	t, err := downloadClient.AddMagnet(magnetLink)
