@@ -38,7 +38,7 @@ func MagnetHandler(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
 	// 解析磁力链接
 	info, err := torrentService.ParseMagnetLink(magnetLink)
 	if err != nil {
-		errorText := fmt.Sprintf("❌ 解析失败: %v\n\n可能的原因：\n• 网络连接问题\n• 磁力链接无效\n• 超时（30秒）", err)
+		errorText := fmt.Sprintf("❌ 解析失败: %v\n\n可能的原因：\n• 网络连接问题\n• 磁力链接无效\n• 超时（3分钟）", err)
 		editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, errorText)
 		bot.Send(editMsg)
 		return
@@ -160,4 +160,3 @@ func escapeMarkdown(text string) string {
 	}
 	return result
 }
-

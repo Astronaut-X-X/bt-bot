@@ -59,7 +59,8 @@ func (ts *TorrentService) ParseMagnetLink(magnetLink string) (*TorrentInfo, erro
 	}
 
 	// 等待元信息获取完成（设置超时）
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	timeout := 3 * time.Minute
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	// 等待元信息
@@ -69,7 +70,7 @@ func (ts *TorrentService) ParseMagnetLink(magnetLink string) (*TorrentInfo, erro
 	case <-ctx.Done():
 		// 超时
 		t.Drop()
-		return nil, fmt.Errorf("获取磁力链接元信息超时. Magnet: %s. 等待时长: %v, 错误: %w, 详细错误信息: %+v", magnetLink, 30*time.Second, ctx.Err(), ctx.Err())
+		return nil, fmt.Errorf("获取磁力链接元信息超时. Magnet: %s. 等待时长: %v, 错误: %w, 详细错误信息: %+v", magnetLink, timeout, ctx.Err(), ctx.Err())
 	}
 
 	// 获取元信息
