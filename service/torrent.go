@@ -23,7 +23,7 @@ func NewTorrentService(cache TorrentCache) (*TorrentService, error) {
 	// 创建 torrent 客户端配置
 	cfg := torrent.NewDefaultClientConfig()
 	cfg.DataDir = "" // 不保存文件到磁盘，仅解析元信息
-	cfg.Debug = true
+	cfg.Debug = false
 
 	// 创建客户端
 	client, err := torrent.NewClient(cfg)
