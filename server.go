@@ -113,6 +113,12 @@ func (s *Server) Run() error {
 
 	// 处理更新
 	for update := range updates {
+		// 处理回调查询（按钮点击）
+		if update.CallbackQuery != nil {
+			handler.CallbackQueryHandler(s.bot, update.CallbackQuery)
+			continue
+		}
+
 		if update.Message == nil {
 			continue
 		}

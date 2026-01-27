@@ -50,6 +50,12 @@ func MagnetHandler(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
 	// 更新消息
 	editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, result)
 	editMsg.ParseMode = tgbotapi.ModeMarkdown
+
+	// 如果有文件，添加文件按钮
+	if len(info.Files) > 0 {
+		editMsg.ReplyMarkup = createFileButtons(info.Files, info.InfoHash)
+	}
+
 	bot.Send(editMsg)
 }
 
@@ -159,4 +165,64 @@ func escapeMarkdown(text string) string {
 		result = strings.ReplaceAll(result, char, "\\"+char)
 	}
 	return result
+}
+
+// createFileButtons 创建文件按钮
+func createFileButtons(files []service.TorrentFileInfo, infoHash string) *tgbotapi.InlineKeyboardMarkup {
+	const maxButtons = 50   // Telegram 限制每个键盘最多 100 个按钮，这里设置 50 个文件按钮
+	const buttonsPerRow = 1 // 每行显示一个按钮（文件名可能较长）
+
+	var buttons [][]tgbotapi.InlineKeyboardButton
+
+	// 计算要显示的文件数量
+	fileCount := len(files)
+	if fileCount > maxButtons {
+		fileCount = maxButtons
+	}
+
+	// 为每个文件创建按钮
+	for i := 0; i < fileCount; i++ {
+		file := files[i]
+		// 获取文件名和大小
+		fileName := getFileName(file.Path)
+		fileSize := formatSize(file.Length)
+
+		// 组合按钮文本：文件名 + 大小（Telegram 按钮文本限制 64 字符）
+		buttonText := fmt.Sprintf("📄 %s (%s)", truncateString(fileName, 40), fileSize)
+
+		// 创建 callback_data，格式：file_<infoHash>_<index>
+		callbackData := fmt.Sprintf("file_%s_%d", infoHash, i)
+
+		button := tgbotapi.NewInlineKeyboardButtonData(buttonText, callbackData)
+		buttons = append(buttons, []tgbotapi.InlineKeyboardButton{button})
+	}
+
+	// 如果文件数量超过显示限制，添加"查看更多"提示
+	if len(files) > maxButtons {
+		infoButton := tgbotapi.NewInlineKeyboardButtonData(
+			fmt.Sprintf("📋 共 %d 个文件（仅显示前 %d 个）", len(files), maxButtons),
+			fmt.Sprintf("info_%s", infoHash),
+		)
+		buttons = append(buttons, []tgbotapi.InlineKeyboardButton{infoButton})
+	}
+
+	keyboard := tgbotapi.NewInlineKeyboardMarkup(buttons...)
+	return &keyboard
+}
+
+// getFileName 从路径中提取文件名
+func getFileName(path string) string {
+	parts := strings.Split(path, "/")
+	if len(parts) > 0 {
+		return parts[len(parts)-1]
+	}
+	return path
+}
+
+// truncateString 截断字符串到指定长度
+func truncateString(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
+	}
+	return s[:maxLen-3] + "..."
 }
