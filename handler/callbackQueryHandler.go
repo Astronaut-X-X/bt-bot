@@ -87,7 +87,8 @@ func handleFileDownload(bot *tgbotapi.BotAPI, chatID int64, infoHash string, fil
 
 	// 检查磁力链接是否存在
 	if torrentInfo.MagnetLink == "" {
-		reply := tgbotapi.NewMessage(chatID, "❌ 磁力链接信息缺失，无法下载")
+		reply := tgbotapi.NewMessage(chatID, fmt.Sprintf("❌ 缓存数据不完整（缺少磁力链接信息）\n\n🔑 InfoHash: `%s`\n\n请重新解析磁力链接以更新缓存。", infoHash))
+		reply.ParseMode = tgbotapi.ModeMarkdown
 		bot.Send(reply)
 		return
 	}

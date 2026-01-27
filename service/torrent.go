@@ -92,8 +92,14 @@ func (ts *TorrentService) ParseMagnetLink(magnetLink string) (*TorrentInfo, erro
 			// 先尝试从缓存获取
 			cachedInfo, cacheErr := ts.cache.Get(infoHash)
 			if cacheErr == nil && cachedInfo != nil {
-				log.Printf("✅ 缓存命中: InfoHash=%s, Name=%s", infoHash, cachedInfo.Name)
-				return cachedInfo, nil
+				// 检查缓存数据是否完整（是否有 MagnetLink）
+				if cachedInfo.MagnetLink == "" {
+					log.Printf("⚠️ 缓存数据不完整（缺少 MagnetLink），重新解析: InfoHash=%s", infoHash)
+					// 缓存数据不完整，继续执行解析流程
+				} else {
+					log.Printf("✅ 缓存命中: InfoHash=%s, Name=%s", infoHash, cachedInfo.Name)
+					return cachedInfo, nil
+				}
 			}
 		}
 	}
