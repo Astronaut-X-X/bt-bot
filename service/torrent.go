@@ -58,7 +58,7 @@ func (ts *TorrentService) ParseMagnetLink(magnetLink string) (*TorrentInfo, erro
 	}
 
 	// 等待元信息获取完成（设置超时）
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*60*time.Second)
 	defer cancel()
 
 	// 等待元信息
