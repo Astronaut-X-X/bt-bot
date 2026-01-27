@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -71,6 +72,7 @@ type TorrentInfo struct {
 	Trackers    []string          `json:"trackers"`     // Tracker 列表
 	PieceLength int64             `json:"piece_length"` // 分片大小
 	NumPieces   int               `json:"num_pieces"`   // 分片数量
+	MagnetLink  string            `json:"magnet_link"`  // 磁力链接（用于下载）
 }
 
 // TorrentFileInfo 文件信息
@@ -155,6 +157,7 @@ func (ts *TorrentService) ParseMagnetLink(magnetLink string) (*TorrentInfo, erro
 		Trackers:    trackers,
 		PieceLength: info.PieceLength,
 		NumPieces:   info.NumPieces(),
+		MagnetLink:  magnetLink, // 保存磁力链接用于后续下载
 	}
 
 	// 清理资源
@@ -242,6 +245,111 @@ func (ts *TorrentService) ParseTorrentFile(torrentPath string) (*TorrentInfo, er
 	}
 
 	return torrentInfo, nil
+}
+
+// DownloadFile 下载指定索引的文件
+func (ts *TorrentService) DownloadFile(magnetLink string, fileIndex int, downloadDir string) (string, error) {
+	// 创建临时下载目录
+	if err := os.MkdirAll(downloadDir, 0755); err != nil {
+		return "", fmt.Errorf("创建下载目录失败: %w", err)
+	}
+
+	// 创建新的客户端用于下载（需要设置 DataDir）
+	cfg := torrent.NewDefaultClientConfig()
+	cfg.DataDir = downloadDir // 设置下载目录
+	cfg.Debug = false
+
+	downloadClient, err := torrent.NewClient(cfg)
+	if err != nil {
+		return "", fmt.Errorf("创建下载客户端失败: %w", err)
+	}
+	defer downloadClient.Close()
+
+	// 添加磁力链接到客户端
+	t, err := downloadClient.AddMagnet(magnetLink)
+	if err != nil {
+		return "", fmt.Errorf("添加磁力链接失败: %w", err)
+	}
+	defer t.Drop()
+
+	// 等待元信息获取完成
+	timeout := 3 * time.Minute
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	select {
+	case <-t.GotInfo():
+		// 元信息获取成功
+	case <-ctx.Done():
+		return "", fmt.Errorf("获取磁力链接元信息超时: %w", ctx.Err())
+	}
+
+	// 获取元信息
+	info := t.Info()
+	if info == nil {
+		return "", fmt.Errorf("无法获取磁力链接元信息")
+	}
+
+	// 检查文件索引是否有效
+	if fileIndex < 0 || fileIndex >= len(info.Files) {
+		return "", fmt.Errorf("文件索引无效: %d (共 %d 个文件)", fileIndex, len(info.Files))
+	}
+
+	// 获取要下载的文件
+	targetFile := info.Files[fileIndex]
+	filePath := targetFile.DisplayPath(info)
+
+	// 创建文件路径（使用文件名，避免路径问题）
+	fileName := filepath.Base(filePath)
+	if fileName == "" || fileName == "." {
+		fileName = fmt.Sprintf("file_%d", fileIndex)
+	}
+
+	// 下载文件
+	log.Printf("📥 开始下载文件: %s (大小: %d 字节)", filePath, targetFile.Length)
+
+	// 获取文件对象
+	file := t.Files()[fileIndex]
+
+	// 设置文件优先级为最高，开始下载
+	file.SetPriority(torrent.PiecePriorityNormal)
+	t.DownloadAll()
+
+	// 等待文件下载完成
+	downloadCtx, downloadCancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer downloadCancel()
+
+	// 等待下载完成
+	for {
+		select {
+		case <-downloadCtx.Done():
+			return "", fmt.Errorf("下载超时")
+		default:
+			// 检查下载进度
+			bytesCompleted := file.BytesCompleted()
+			if bytesCompleted >= targetFile.Length {
+				log.Printf("✅ 文件下载完成: %s (已下载: %d 字节)", filePath, bytesCompleted)
+				goto downloadComplete
+			}
+			time.Sleep(1 * time.Second)
+		}
+	}
+
+downloadComplete:
+	// 文件下载完成，获取实际文件路径
+	// torrent 库会将文件保存到 DataDir + 文件路径
+	actualPath := filepath.Join(downloadDir, filePath)
+
+	// 如果文件不存在，尝试直接使用文件名
+	if _, err := os.Stat(actualPath); os.IsNotExist(err) {
+		// 尝试查找文件（可能在不同的子目录中）
+		actualPath = filepath.Join(downloadDir, fileName)
+		if _, err := os.Stat(actualPath); os.IsNotExist(err) {
+			return "", fmt.Errorf("下载的文件不存在: %s", actualPath)
+		}
+	}
+
+	return actualPath, nil
 }
 
 // Close 关闭服务
