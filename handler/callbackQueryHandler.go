@@ -121,8 +121,21 @@ func handleFileDownload(bot *tgbotapi.BotAPI, chatID int64, infoHash string, fil
 	}
 	defer torrentService.Close()
 
+	// 创建进度更新回调函数
+	progressCallback := func(bytesCompleted, totalBytes int64) {
+		percentage := float64(bytesCompleted) * 100 / float64(totalBytes)
+		progressText := fmt.Sprintf("⏳ 正在下载文件: %s\n📦 大小: %s\n\n📊 进度: %.2f%% (%s / %s)\n\n请稍候...",
+			fileName,
+			formatSize(fileInfo.Length),
+			percentage,
+			formatSize(bytesCompleted),
+			formatSize(totalBytes))
+		editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, progressText)
+		bot.Send(editMsg)
+	}
+
 	// 下载文件
-	filePath, err := torrentService.DownloadFile(torrentInfo.MagnetLink, fileIndex, downloadDir)
+	filePath, err := torrentService.DownloadFile(torrentInfo.MagnetLink, fileIndex, downloadDir, progressCallback)
 	if err != nil {
 		errorText := fmt.Sprintf("❌ 下载失败: %v", err)
 		editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, errorText)

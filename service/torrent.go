@@ -259,8 +259,14 @@ func (ts *TorrentService) ParseTorrentFile(torrentPath string) (*TorrentInfo, er
 	return torrentInfo, nil
 }
 
+// ProgressCallback 下载进度回调函数
+// bytesCompleted: 已下载字节数
+// totalBytes: 总字节数
+type ProgressCallback func(bytesCompleted, totalBytes int64)
+
 // DownloadFile 下载指定索引的文件
-func (ts *TorrentService) DownloadFile(magnetLink string, fileIndex int, downloadDir string) (string, error) {
+// progressCallback: 可选的进度回调函数，每 5 秒调用一次
+func (ts *TorrentService) DownloadFile(magnetLink string, fileIndex int, downloadDir string, progressCallback ProgressCallback) (string, error) {
 	// 创建临时下载目录
 	if err := os.MkdirAll(downloadDir, 0755); err != nil {
 		return "", fmt.Errorf("创建下载目录失败: %w", err)
@@ -371,15 +377,42 @@ func (ts *TorrentService) DownloadFile(magnetLink string, fileIndex int, downloa
 	file.SetPriority(torrent.PiecePriorityNormal)
 	t.DownloadAll()
 
+	// 根据文件大小动态计算超时时间
+	// 假设最低下载速度为 100KB/s，至少保留 2 小时的基础时间
+	// 对于大文件，按 100KB/s 计算所需时间，再加上 30 分钟缓冲
+	minSpeed := int64(100 * 1024) // 100KB/s
+	estimatedTime := time.Duration(targetFile.Length/minSpeed) * time.Second
+	if estimatedTime < 2*time.Hour {
+		estimatedTime = 2 * time.Hour
+	}
+	estimatedTime += 30 * time.Minute // 增加 30 分钟缓冲
+	// 最大超时时间限制为 6 小时
+	maxTimeout := 6 * time.Hour
+	if estimatedTime > maxTimeout {
+		estimatedTime = maxTimeout
+	}
+
+	log.Printf("⏱️ 设置下载超时时间: %v (文件大小: %d 字节)", estimatedTime, targetFile.Length)
+
 	// 等待文件下载完成
-	downloadCtx, downloadCancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	downloadCtx, downloadCancel := context.WithTimeout(context.Background(), estimatedTime)
 	defer downloadCancel()
+
+	// 进度更新间隔（每 5 秒更新一次）
+	progressUpdateInterval := 5 * time.Second
+	lastProgressUpdate := time.Now()
 
 	// 等待下载完成
 	for {
 		select {
 		case <-downloadCtx.Done():
-			return "", fmt.Errorf("下载超时")
+			// 检查是否真的超时，还是已经下载完成
+			bytesCompleted := file.BytesCompleted()
+			if bytesCompleted >= targetFile.Length {
+				log.Printf("✅ 文件下载完成: %s (已下载: %d 字节)", filePath, bytesCompleted)
+				goto downloadComplete
+			}
+			return "", fmt.Errorf("下载超时 (已下载: %d/%d 字节, %.2f%%)", bytesCompleted, targetFile.Length, float64(bytesCompleted)*100/float64(targetFile.Length))
 		default:
 			// 检查下载进度
 			bytesCompleted := file.BytesCompleted()
@@ -387,6 +420,13 @@ func (ts *TorrentService) DownloadFile(magnetLink string, fileIndex int, downloa
 				log.Printf("✅ 文件下载完成: %s (已下载: %d 字节)", filePath, bytesCompleted)
 				goto downloadComplete
 			}
+
+			// 定期更新进度（每 5 秒）
+			if progressCallback != nil && time.Since(lastProgressUpdate) >= progressUpdateInterval {
+				progressCallback(bytesCompleted, targetFile.Length)
+				lastProgressUpdate = time.Now()
+			}
+
 			time.Sleep(1 * time.Second)
 		}
 	}
