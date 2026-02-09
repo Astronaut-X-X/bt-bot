@@ -100,14 +100,6 @@ func handleFileDownload(bot *tgbotapi.BotAPI, chatID int64, infoHash string, fil
 		fileName = fmt.Sprintf("file_%d", fileIndex)
 	}
 
-	// 检查文件大小（Telegram 限制 50MB）
-	const maxFileSize = 50 * 1024 * 1024 // 50MB
-	if fileInfo.Length > maxFileSize {
-		reply := tgbotapi.NewMessage(chatID, fmt.Sprintf("❌ 文件过大: %s\n\nTelegram 限制文件大小为 50MB，当前文件: %s", fileName, formatSize(fileInfo.Length)))
-		bot.Send(reply)
-		return
-	}
-
 	// 发送下载中消息
 	downloadingMsg := tgbotapi.NewMessage(chatID, fmt.Sprintf("⏳ 正在下载文件: %s\n📦 大小: %s\n\n请稍候...", fileName, formatSize(fileInfo.Length)))
 	sentMsg, _ := bot.Send(downloadingMsg)
@@ -146,9 +138,24 @@ func handleFileDownload(bot *tgbotapi.BotAPI, chatID int64, infoHash string, fil
 		return
 	}
 
-	// 发送文件给用户
-	fileConfig := tgbotapi.NewDocument(chatID, tgbotapi.FilePath(filePath))
-	fileConfig.Caption = fmt.Sprintf("📄 %s", fileName)
+	// 根据文件类型发送：图片、视频、还是普通文件
+	ext := strings.ToLower(filepath.Ext(fileName))
+	var fileConfig tgbotapi.Chattable
+
+	switch ext {
+	case ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".webp":
+		photo := tgbotapi.NewPhoto(chatID, tgbotapi.FilePath(filePath))
+		photo.Caption = fmt.Sprintf("📷 %s", fileName)
+		fileConfig = photo
+	case ".mp4", ".mov", ".mkv", ".webm", ".avi":
+		video := tgbotapi.NewVideo(chatID, tgbotapi.FilePath(filePath))
+		video.Caption = fmt.Sprintf("🎞️ %s", fileName)
+		fileConfig = video
+	default:
+		doc := tgbotapi.NewDocument(chatID, tgbotapi.FilePath(filePath))
+		doc.Caption = fmt.Sprintf("📄 %s", fileName)
+		fileConfig = doc
+	}
 
 	// 删除下载中消息
 	bot.Request(tgbotapi.NewDeleteMessage(chatID, sentMsg.MessageID))
