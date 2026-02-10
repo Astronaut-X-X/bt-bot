@@ -171,7 +171,11 @@ func handleFileDownload(bot *tgbotapi.BotAPI, chatID int64, infoHash string, fil
 		var downloadErr error
 		filePath, downloadErr = torrentService.DownloadFile(torrentInfo.MagnetLink, fileIndex, downloadDir, progressCallback)
 		if downloadErr != nil {
+			// 检查是否是用户取消
 			errorText := fmt.Sprintf("❌ 下载失败: %v", downloadErr)
+			if strings.Contains(downloadErr.Error(), "下载已取消") {
+				errorText = "🛑 下载已取消"
+			}
 			editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, errorText)
 			bot.Send(editMsg)
 			return

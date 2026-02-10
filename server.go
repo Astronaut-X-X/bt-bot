@@ -145,6 +145,8 @@ func (s *Server) Run() error {
 				handler.MagnetHandler(s.bot, msg)
 			case "about":
 				handler.AboutHandler(s.bot, msg)
+			case "stop":
+				handler.StopHandler(s.bot, msg)
 			default:
 				handler.UnknownHandler(s.bot, msg)
 			}

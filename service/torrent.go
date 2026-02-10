@@ -18,6 +18,10 @@ import (
 var (
 	globalClientMutex sync.Mutex      // 全局客户端互斥锁
 	globalClient      *torrent.Client // 全局客户端（用于避免端口冲突）
+
+	// 下载控制相关
+	downloadCancelFunc  context.CancelFunc // 当前下载的取消函数
+	downloadCancelMutex sync.Mutex         // 下载取消函数的互斥锁
 )
 
 // TorrentService 磁力链接服务
@@ -404,9 +408,31 @@ func (ts *TorrentService) DownloadFile(magnetLink string, fileIndex int, downloa
 
 	log.Printf("⏱️ 设置下载超时时间: %v (文件大小: %d 字节)", estimatedTime, targetFile.Length)
 
-	// 等待文件下载完成
-	downloadCtx, downloadCancel := context.WithTimeout(context.Background(), estimatedTime)
-	defer downloadCancel()
+	// 创建可取消的 context（支持超时和手动取消）
+	baseCtx, baseCancel := context.WithTimeout(context.Background(), estimatedTime)
+	downloadCtx, downloadCancel := context.WithCancel(baseCtx)
+
+	// 保存取消函数到全局变量（用于 stop 命令）
+	downloadCancelMutex.Lock()
+	oldCancel := downloadCancelFunc
+	downloadCancelFunc = func() {
+		downloadCancel()
+		baseCancel()
+	}
+	downloadCancelMutex.Unlock()
+
+	// 清理函数
+	defer func() {
+		downloadCancel()
+		baseCancel()
+		downloadCancelMutex.Lock()
+		downloadCancelFunc = nil
+		downloadCancelMutex.Unlock()
+		// 如果之前有旧的取消函数，调用它（清理）
+		if oldCancel != nil {
+			oldCancel()
+		}
+	}()
 
 	// 进度更新间隔（每 5 秒更新一次）
 	progressUpdateInterval := 5 * time.Second
@@ -416,11 +442,16 @@ func (ts *TorrentService) DownloadFile(magnetLink string, fileIndex int, downloa
 	for {
 		select {
 		case <-downloadCtx.Done():
-			// 检查是否真的超时，还是已经下载完成
+			// 检查是否真的超时或被取消，还是已经下载完成
 			bytesCompleted := file.BytesCompleted()
 			if bytesCompleted >= targetFile.Length {
 				log.Printf("✅ 文件下载完成: %s (已下载: %d 字节)", filePath, bytesCompleted)
 				goto downloadComplete
+			}
+			// 检查是否是被手动取消
+			if downloadCtx.Err() == context.Canceled {
+				log.Printf("🛑 下载已被用户取消: %s (已下载: %d/%d 字节, %.2f%%)", filePath, bytesCompleted, targetFile.Length, float64(bytesCompleted)*100/float64(targetFile.Length))
+				return "", fmt.Errorf("下载已取消 (已下载: %d/%d 字节, %.2f%%)", bytesCompleted, targetFile.Length, float64(bytesCompleted)*100/float64(targetFile.Length))
 			}
 			return "", fmt.Errorf("下载超时 (已下载: %d/%d 字节, %.2f%%)", bytesCompleted, targetFile.Length, float64(bytesCompleted)*100/float64(targetFile.Length))
 		default:
@@ -464,4 +495,29 @@ func (ts *TorrentService) Close() error {
 		ts.client.Close()
 	}
 	return nil
+}
+
+// StopDownload 停止当前正在进行的下载
+func StopDownload() bool {
+	downloadCancelMutex.Lock()
+	cancelFunc := downloadCancelFunc
+	downloadCancelFunc = nil
+	downloadCancelMutex.Unlock()
+
+	if cancelFunc != nil {
+		log.Printf("🛑 用户请求停止下载")
+		cancelFunc()
+
+		// 尝试关闭全局客户端
+		globalClientMutex.Lock()
+		if globalClient != nil {
+			log.Printf("🔒 关闭下载客户端...")
+			globalClient.Close()
+			globalClient = nil
+		}
+		globalClientMutex.Unlock()
+
+		return true
+	}
+	return false
 }
