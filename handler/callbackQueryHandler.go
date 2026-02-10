@@ -56,6 +56,25 @@ func CallbackQueryHandler(bot *tgbotapi.BotAPI, callback *tgbotapi.CallbackQuery
 		}
 	}
 
+	// 处理停止下载按钮点击
+	if data == "stop_download" {
+		// 尝试停止下载
+		if service.StopDownload() {
+			// 更新消息，显示已停止，并移除按钮
+			stopText := "🛑 下载已停止"
+			editMsg := tgbotapi.NewEditMessageText(chatID, callback.Message.MessageID, stopText)
+			editMsg.ReplyMarkup = nil // 移除按钮
+			bot.Send(editMsg)
+		} else {
+			// 没有正在进行的下载，更新消息并移除按钮
+			noDownloadText := "ℹ️ 当前没有正在进行的下载任务"
+			editMsg := tgbotapi.NewEditMessageText(chatID, callback.Message.MessageID, noDownloadText)
+			editMsg.ReplyMarkup = nil // 移除按钮
+			bot.Send(editMsg)
+		}
+		return
+	}
+
 	// 未知的回调数据
 	reply := tgbotapi.NewMessage(chatID, "❌ 未知的回调操作")
 	bot.Send(reply)
@@ -140,8 +159,12 @@ func handleFileDownload(bot *tgbotapi.BotAPI, chatID int64, infoHash string, fil
 		filePath = localFilePath
 		// isLocalFile = true
 	} else {
-		// 发送下载中消息
+		// 发送下载中消息（带停止按钮）
+		stopButton := tgbotapi.NewInlineKeyboardButtonData("🛑 停止下载", "stop_download")
+		keyboard := tgbotapi.NewInlineKeyboardMarkup([]tgbotapi.InlineKeyboardButton{stopButton})
+		
 		downloadingMsg := tgbotapi.NewMessage(chatID, fmt.Sprintf("⏳ 正在下载文件: %s\n📦 大小: %s\n\n请稍候...", fileName, formatSize(fileInfo.Length)))
+		downloadingMsg.ReplyMarkup = keyboard
 		sentMsg, _ = bot.Send(downloadingMsg)
 
 		// 创建 torrent 服务
@@ -163,7 +186,13 @@ func handleFileDownload(bot *tgbotapi.BotAPI, chatID int64, infoHash string, fil
 				percentage,
 				formatSize(bytesCompleted),
 				formatSize(totalBytes))
+			
+			// 创建停止按钮
+			stopButton := tgbotapi.NewInlineKeyboardButtonData("🛑 停止下载", "stop_download")
+			keyboard := tgbotapi.NewInlineKeyboardMarkup([]tgbotapi.InlineKeyboardButton{stopButton})
+			
 			editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, progressText)
+			editMsg.ReplyMarkup = &keyboard
 			bot.Send(editMsg)
 		}
 
@@ -177,6 +206,8 @@ func handleFileDownload(bot *tgbotapi.BotAPI, chatID int64, infoHash string, fil
 				errorText = "🛑 下载已取消"
 			}
 			editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, errorText)
+			// 移除按钮（设置为 nil）
+			editMsg.ReplyMarkup = nil
 			bot.Send(editMsg)
 			return
 		}
