@@ -370,11 +370,21 @@ func (ts *TorrentService) DownloadFile(magnetLink string, fileIndex int, downloa
 	// 下载文件
 	log.Printf("📥 开始下载文件: %s (大小: %d 字节)", filePath, targetFile.Length)
 
-	// 获取文件对象
-	file := t.Files()[fileIndex]
+	// 获取所有文件对象
+	allFiles := t.Files()
 
-	// 设置文件优先级为最高，开始下载
+	// 先将所有文件的优先级设置为 None（不下载）
+	for i := range allFiles {
+		allFiles[i].SetPriority(torrent.PiecePriorityNone)
+	}
+
+	// 获取目标文件对象
+	file := allFiles[fileIndex]
+
+	// 只设置目标文件的优先级为 Normal（下载）
 	file.SetPriority(torrent.PiecePriorityNormal)
+
+	// 开始下载（只会下载优先级不为 None 的文件）
 	t.DownloadAll()
 
 	// 根据文件大小动态计算超时时间
