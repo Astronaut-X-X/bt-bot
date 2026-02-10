@@ -108,7 +108,7 @@ func handleFileDownload(bot *tgbotapi.BotAPI, chatID int64, infoHash string, fil
 	downloadDir := filepath.Join("./downloads", infoHash)
 	defer func() {
 		// 清理下载目录
-		os.RemoveAll(downloadDir)
+		// os.RemoveAll(downloadDir)
 	}()
 
 	// 创建 torrent 服务
