@@ -100,10 +100,6 @@ func handleFileDownload(bot *tgbotapi.BotAPI, chatID int64, infoHash string, fil
 		fileName = fmt.Sprintf("file_%d", fileIndex)
 	}
 
-	// 发送下载中消息
-	downloadingMsg := tgbotapi.NewMessage(chatID, fmt.Sprintf("⏳ 正在下载文件: %s\n📦 大小: %s\n\n请稍候...", fileName, formatSize(fileInfo.Length)))
-	sentMsg, _ := bot.Send(downloadingMsg)
-
 	// 创建临时下载目录
 	downloadDir := filepath.Join("./downloads", infoHash)
 	defer func() {
@@ -111,46 +107,84 @@ func handleFileDownload(bot *tgbotapi.BotAPI, chatID int64, infoHash string, fil
 		// os.RemoveAll(downloadDir)
 	}()
 
-	// 创建 torrent 服务
-	torrentService, err := service.NewTorrentService(torrentCache)
-	if err != nil {
-		errorText := fmt.Sprintf("❌ 创建下载服务失败: %v", err)
-		editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, errorText)
-		bot.Send(editMsg)
-		return
-	}
-	defer torrentService.Close()
-
-	// 创建进度更新回调函数
-	progressCallback := func(bytesCompleted, totalBytes int64) {
-		percentage := float64(bytesCompleted) * 100 / float64(totalBytes)
-		progressText := fmt.Sprintf("⏳ 正在下载文件: %s\n📦 大小: %s\n\n📊 进度: %.2f%% (%s / %s)\n\n请稍候...",
-			fileName,
-			formatSize(fileInfo.Length),
-			percentage,
-			formatSize(bytesCompleted),
-			formatSize(totalBytes))
-		editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, progressText)
-		bot.Send(editMsg)
+	// 先检查本地文件是否存在
+	// 可能的文件路径：downloadDir + "/" + fileInfo.Path（完整路径）
+	// 或者：downloadDir + "/" + torrentInfo.Name + "/" + fileName
+	var localFilePath string
+	possiblePaths := []string{
+		filepath.Join(downloadDir, fileInfo.Path),              // 完整路径
+		filepath.Join(downloadDir, torrentInfo.Name, fileName), // torrent名称/文件名
+		filepath.Join(downloadDir, fileName),                   // 直接文件名
 	}
 
-	// 下载文件
-	filePath, err := torrentService.DownloadFile(torrentInfo.MagnetLink, fileIndex, downloadDir, progressCallback)
-	if err != nil {
-		errorText := fmt.Sprintf("❌ 下载失败: %v", err)
-		editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, errorText)
-		bot.Send(editMsg)
-		return
+	// 检查每个可能的路径
+	for _, path := range possiblePaths {
+		if stat, err := os.Stat(path); err == nil {
+			// 文件存在，检查大小是否匹配
+			if stat.Size() == fileInfo.Length {
+				localFilePath = path
+				break
+			}
+		}
 	}
 
-	// 检查文件是否存在
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		errorText := fmt.Sprintf("❌ 文件不存在: %s", filePath)
-		editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, errorText)
-		bot.Send(editMsg)
-		return
-	}
+	// 如果找到本地文件，直接使用
+	var filePath string
+	var sentMsg tgbotapi.Message
+	// var isLocalFile bool
+	if localFilePath != "" {
+		// 发送消息，告知使用本地文件
+		msg := tgbotapi.NewMessage(chatID, fmt.Sprintf("✅ 找到本地文件: %s\n📦 大小: %s\n\n正在发送...", fileName, formatSize(fileInfo.Length)))
+		sentMsg, _ = bot.Send(msg)
+		// 直接使用本地文件，跳过下载步骤
+		filePath = localFilePath
+		// isLocalFile = true
+	} else {
+		// 发送下载中消息
+		downloadingMsg := tgbotapi.NewMessage(chatID, fmt.Sprintf("⏳ 正在下载文件: %s\n📦 大小: %s\n\n请稍候...", fileName, formatSize(fileInfo.Length)))
+		sentMsg, _ = bot.Send(downloadingMsg)
 
+		// 创建 torrent 服务
+		torrentService, err := service.NewTorrentService(torrentCache)
+		if err != nil {
+			errorText := fmt.Sprintf("❌ 创建下载服务失败: %v", err)
+			editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, errorText)
+			bot.Send(editMsg)
+			return
+		}
+		defer torrentService.Close()
+
+		// 创建进度更新回调函数
+		progressCallback := func(bytesCompleted, totalBytes int64) {
+			percentage := float64(bytesCompleted) * 100 / float64(totalBytes)
+			progressText := fmt.Sprintf("⏳ 正在下载文件: %s\n📦 大小: %s\n\n📊 进度: %.2f%% (%s / %s)\n\n请稍候...",
+				fileName,
+				formatSize(fileInfo.Length),
+				percentage,
+				formatSize(bytesCompleted),
+				formatSize(totalBytes))
+			editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, progressText)
+			bot.Send(editMsg)
+		}
+
+		// 下载文件
+		var downloadErr error
+		filePath, downloadErr = torrentService.DownloadFile(torrentInfo.MagnetLink, fileIndex, downloadDir, progressCallback)
+		if downloadErr != nil {
+			errorText := fmt.Sprintf("❌ 下载失败: %v", downloadErr)
+			editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, errorText)
+			bot.Send(editMsg)
+			return
+		}
+
+		// 检查文件是否存在
+		if _, statErr := os.Stat(filePath); os.IsNotExist(statErr) {
+			errorText := fmt.Sprintf("❌ 文件不存在: %s", filePath)
+			editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, errorText)
+			bot.Send(editMsg)
+			return
+		}
+	}
 	// 根据文件类型发送：图片、视频、还是普通文件
 	ext := strings.ToLower(filepath.Ext(fileName))
 	var fileConfig tgbotapi.Chattable
@@ -170,8 +204,10 @@ func handleFileDownload(bot *tgbotapi.BotAPI, chatID int64, infoHash string, fil
 		fileConfig = doc
 	}
 
-	// 删除下载中消息
-	bot.Request(tgbotapi.NewDeleteMessage(chatID, sentMsg.MessageID))
+	// // 删除下载中消息（如果存在）
+	// if sentMsg.MessageID != 0 {
+	// 	bot.Request(tgbotapi.NewDeleteMessage(chatID, sentMsg.MessageID))
+	// }
 
 	// 发送文件
 	_, err = bot.Send(fileConfig)
@@ -182,6 +218,8 @@ func handleFileDownload(bot *tgbotapi.BotAPI, chatID int64, infoHash string, fil
 		return
 	}
 
-	// 删除临时文件
-	os.Remove(filePath)
+	// // 删除临时文件（仅删除下载的文件，不删除本地已存在的文件）
+	// if !isLocalFile {
+	// 	os.Remove(filePath)
+	// }
 }
