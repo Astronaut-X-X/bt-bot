@@ -162,7 +162,7 @@ func handleFileDownload(bot *tgbotapi.BotAPI, chatID int64, infoHash string, fil
 		// 发送下载中消息（带停止按钮）
 		stopButton := tgbotapi.NewInlineKeyboardButtonData("🛑 停止下载", "stop_download")
 		keyboard := tgbotapi.NewInlineKeyboardMarkup([]tgbotapi.InlineKeyboardButton{stopButton})
-		
+
 		downloadingMsg := tgbotapi.NewMessage(chatID, fmt.Sprintf("⏳ 正在下载文件: %s\n📦 大小: %s\n\n请稍候...", fileName, formatSize(fileInfo.Length)))
 		downloadingMsg.ReplyMarkup = keyboard
 		sentMsg, _ = bot.Send(downloadingMsg)
@@ -186,11 +186,11 @@ func handleFileDownload(bot *tgbotapi.BotAPI, chatID int64, infoHash string, fil
 				percentage,
 				formatSize(bytesCompleted),
 				formatSize(totalBytes))
-			
+
 			// 创建停止按钮
 			stopButton := tgbotapi.NewInlineKeyboardButtonData("🛑 停止下载", "stop_download")
 			keyboard := tgbotapi.NewInlineKeyboardMarkup([]tgbotapi.InlineKeyboardButton{stopButton})
-			
+
 			editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, progressText)
 			editMsg.ReplyMarkup = &keyboard
 			bot.Send(editMsg)
@@ -220,20 +220,81 @@ func handleFileDownload(bot *tgbotapi.BotAPI, chatID int64, infoHash string, fil
 			return
 		}
 	}
+	// 获取文件信息（大小和绝对路径）
+	fileStat, statErr := os.Stat(filePath)
+	if statErr != nil {
+		errorText := fmt.Sprintf("❌ 无法获取文件信息: %v", statErr)
+		editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, errorText)
+		bot.Send(editMsg)
+		return
+	}
+	fileSize := fileStat.Size()
+
+	// 获取文件的绝对路径
+	absPath, absErr := filepath.Abs(filePath)
+	if absErr != nil {
+		absPath = filePath // 如果获取绝对路径失败，使用相对路径
+	}
+
+	// Telegram Bot API 文件大小限制
+	const (
+		maxPhotoSize    = 10 * 1024 * 1024 // 10MB
+		maxVideoSize    = 50 * 1024 * 1024 // 50MB
+		maxDocumentSize = 50 * 1024 * 1024 // 50MB
+	)
+
 	// 根据文件类型发送：图片、视频、还是普通文件
 	ext := strings.ToLower(filepath.Ext(fileName))
 	var fileConfig tgbotapi.Chattable
+	var maxSize int64
+	var fileTypeName string
 
 	switch ext {
 	case ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".webp":
+		maxSize = maxPhotoSize
+		fileTypeName = "图片"
+		if fileSize > maxPhotoSize {
+			// 文件太大，发送错误消息
+			errorText := fmt.Sprintf("⚠️ 文件过大，无法发送\n\n📄 文件名: %s\n📦 文件大小: %s\n📏 限制大小: %s\n\n💡 提示：Telegram Bot API 限制图片文件最大为 10MB。\n\n📁 文件路径:\n`%s`",
+				fileName, formatSize(fileSize), formatSize(maxPhotoSize), absPath)
+			editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, errorText)
+			editMsg.ParseMode = tgbotapi.ModeMarkdown
+			editMsg.ReplyMarkup = nil
+			bot.Send(editMsg)
+			return
+		}
 		photo := tgbotapi.NewPhoto(chatID, tgbotapi.FilePath(filePath))
 		photo.Caption = fmt.Sprintf("📷 %s", fileName)
 		fileConfig = photo
 	case ".mp4", ".mov", ".mkv", ".webm", ".avi":
+		maxSize = maxVideoSize
+		fileTypeName = "视频"
+		if fileSize > maxVideoSize {
+			// 文件太大，发送错误消息
+			errorText := fmt.Sprintf("⚠️ 文件过大，无法发送\n\n📄 文件名: %s\n📦 文件大小: %s\n📏 限制大小: %s\n\n💡 提示：Telegram Bot API 限制视频文件最大为 50MB。\n\n📁 文件路径:\n`%s`",
+				fileName, formatSize(fileSize), formatSize(maxVideoSize), absPath)
+			editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, errorText)
+			editMsg.ParseMode = tgbotapi.ModeMarkdown
+			editMsg.ReplyMarkup = nil
+			bot.Send(editMsg)
+			return
+		}
 		video := tgbotapi.NewVideo(chatID, tgbotapi.FilePath(filePath))
 		video.Caption = fmt.Sprintf("🎞️ %s", fileName)
 		fileConfig = video
 	default:
+		maxSize = maxDocumentSize
+		fileTypeName = "文档"
+		if fileSize > maxDocumentSize {
+			// 文件太大，发送错误消息
+			errorText := fmt.Sprintf("⚠️ 文件过大，无法发送\n\n📄 文件名: %s\n📦 文件大小: %s\n📏 限制大小: %s\n\n💡 提示：Telegram Bot API 限制文档文件最大为 50MB。\n\n📁 文件路径:\n`%s`",
+				fileName, formatSize(fileSize), formatSize(maxDocumentSize), absPath)
+			editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, errorText)
+			editMsg.ParseMode = tgbotapi.ModeMarkdown
+			editMsg.ReplyMarkup = nil
+			bot.Send(editMsg)
+			return
+		}
 		doc := tgbotapi.NewDocument(chatID, tgbotapi.FilePath(filePath))
 		doc.Caption = fmt.Sprintf("📄 %s", fileName)
 		fileConfig = doc
@@ -247,9 +308,16 @@ func handleFileDownload(bot *tgbotapi.BotAPI, chatID int64, infoHash string, fil
 	// 发送文件
 	_, err = bot.Send(fileConfig)
 	if err != nil {
+		// 检查是否是文件过大错误
 		errorText := fmt.Sprintf("❌ 发送文件失败: %v", err)
-		reply := tgbotapi.NewMessage(chatID, errorText)
-		bot.Send(reply)
+		if strings.Contains(err.Error(), "Request Entity Too Large") || strings.Contains(err.Error(), "file is too big") {
+			errorText = fmt.Sprintf("⚠️ 文件过大，无法发送\n\n📄 文件名: %s\n📦 文件大小: %s\n📏 %s限制: %s\n\n💡 提示：文件超过了 Telegram Bot API 的大小限制。\n\n📁 文件路径:\n`%s`",
+				fileName, formatSize(fileSize), fileTypeName, formatSize(maxSize), absPath)
+		}
+		editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, errorText)
+		editMsg.ParseMode = tgbotapi.ModeMarkdown
+		editMsg.ReplyMarkup = nil
+		bot.Send(editMsg)
 		return
 	}
 
