@@ -475,18 +475,80 @@ func (ts *TorrentService) DownloadFile(magnetLink string, fileIndex int, downloa
 downloadComplete:
 	// 文件下载完成，获取实际文件路径
 	// torrent 库会将文件保存到 DataDir + 文件路径
-	actualPath := filepath.Join(downloadDir, filePath)
+	// 尝试多个可能的路径
 
-	// 如果文件不存在，尝试直接使用文件名
-	if _, err := os.Stat(actualPath); os.IsNotExist(err) {
-		// 尝试查找文件（可能在不同的子目录中）
-		actualPath = filepath.Join(downloadDir, fileName)
-		if _, err := os.Stat(actualPath); os.IsNotExist(err) {
-			return "", fmt.Errorf("下载的文件不存在: %s", actualPath)
+	// 路径1: downloadDir + filePath (完整相对路径)
+	possiblePaths := []string{
+		filepath.Join(downloadDir, filePath),
+		filepath.Join(downloadDir, fileName),
+	}
+
+	// 如果 filePath 包含目录，也尝试直接使用文件名
+	if filePath != fileName {
+		// 路径2: downloadDir + torrent名称 + fileName
+		// 注意：info.Name 是 torrent 的名称（根目录名）
+		if info.Name != "" {
+			possiblePaths = append(possiblePaths, filepath.Join(downloadDir, info.Name, fileName))
+			possiblePaths = append(possiblePaths, filepath.Join(downloadDir, info.Name, filePath))
 		}
 	}
 
+	// 尝试每个可能的路径
+	var actualPath string
+	found := false
+	for _, path := range possiblePaths {
+		if stat, err := os.Stat(path); err == nil {
+			// 检查是否是文件且大小匹配
+			if !stat.IsDir() && stat.Size() == targetFile.Length {
+				actualPath = path
+				found = true
+				log.Printf("✅ 找到下载文件: %s (大小: %d 字节)", actualPath, stat.Size())
+				break
+			}
+		}
+	}
+
+	// 如果还没找到，尝试递归查找
+	if !found {
+		log.Printf("⚠️ 在常见路径中未找到文件，尝试递归查找: %s", fileName)
+		actualPath = findFileRecursive(downloadDir, fileName, targetFile.Length)
+		if actualPath != "" {
+			found = true
+			log.Printf("✅ 递归查找到文件: %s", actualPath)
+		}
+	}
+
+	if !found {
+		return "", fmt.Errorf("下载的文件不存在。尝试的路径: %v", possiblePaths)
+	}
+
 	return actualPath, nil
+}
+
+// findFileRecursive 递归查找文件
+func findFileRecursive(dir, fileName string, expectedSize int64) string {
+	var foundPath string
+
+	filepath.Walk(dir, func(path string, info os.FileInfo, walkErr error) error {
+		// 如果已经找到，跳过后续处理
+		if foundPath != "" {
+			return filepath.SkipAll
+		}
+
+		if walkErr != nil {
+			return nil // 忽略错误，继续查找
+		}
+
+		// 检查是否是目标文件
+		if !info.IsDir() && info.Name() == fileName && info.Size() == expectedSize {
+			foundPath = path
+			return filepath.SkipAll // 找到后跳过剩余项
+		}
+
+		return nil
+	})
+
+	return foundPath
 }
 
 // Close 关闭服务
