@@ -8,7 +8,7 @@ const (
 
 const (
 	StartMessageZH = `
-Hi,  {username}
+Hi,  {bot_user_name}
 欢迎使用 BtBot 🤖 
 
 🔍 功能介绍：
@@ -30,7 +30,7 @@ Bot频道：
 `
 
 	StartMessageEN = `
-Hi,  {username}   
+Hi,  {bot_user_name}   
 
 Welcome to BtBot 🤖 
 
