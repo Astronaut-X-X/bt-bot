@@ -22,7 +22,7 @@ func init() {
 }
 
 func Text(key string, lang ...string) string {
-	translationLang := LangEN
+	translationLang := LangZH
 	if len(lang) > 0 {
 		translationLang = lang[0]
 	}
