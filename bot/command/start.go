@@ -20,6 +20,16 @@ func StartCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	})
 
 	reply := tgbotapi.NewMessage(chatID, message)
+	reply.ReplyMarkup = startReplyMarkup()
 
 	bot.Send(reply)
+}
+
+func startReplyMarkup() *tgbotapi.InlineKeyboardMarkup {
+	return &tgbotapi.InlineKeyboardMarkup{
+		InlineKeyboard: [][]tgbotapi.InlineKeyboardButton{
+			{tgbotapi.NewInlineKeyboardButtonData("🇨🇳中文", "lang_zh")},
+			{tgbotapi.NewInlineKeyboardButtonData("🇺🇸English", "lang_en")},
+		},
+	}
 }
