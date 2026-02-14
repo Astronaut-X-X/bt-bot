@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/gotd/td/telegram"
 )
@@ -34,4 +35,17 @@ func GetSessionStorage(uuid string) *telegram.FileSessionStorage {
 	return &telegram.FileSessionStorage{
 		Path: GetSessionFile(uuid),
 	}
+}
+
+func GetAllSessionUUIDs() []string {
+	files, err := os.ReadDir(sessionDir)
+	if err != nil {
+		return nil
+	}
+
+	uuids := make([]string, 0, len(files))
+	for _, file := range files {
+		uuids = append(uuids, strings.TrimSuffix(file.Name(), ".json"))
+	}
+	return uuids
 }

@@ -16,10 +16,7 @@ var stopClient bg.StopFunc // 用于停止客户端连接的函数
 func Login(ctx context.Context) {
 	uuid := uuid.New().String()
 
-	appID := 2040
-	appHash := "b18441a1ff607e10a989891a5462e627"
-
-	client := telegram.NewClient(appID, appHash, telegram.Options{
+	client := telegram.NewClient(AppID, AppHash, telegram.Options{
 		Logger:         logger,
 		SessionStorage: GetSessionStorage(uuid),
 	})
