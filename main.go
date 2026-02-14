@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	"bt-bot/bot"
 	"bt-bot/utils"
 )
 
@@ -13,14 +14,10 @@ func main() {
 		log.Fatal("加载配置失败:", err)
 	}
 
-	// 创建服务器实例
-	server, err := NewServer(config)
+	bot, err := bot.NewBot(config.Bot.Token, config.Bot.Debug)
 	if err != nil {
-		log.Fatal("创建服务器失败:", err)
+		log.Fatal("创建 bot 失败:", err)
 	}
 
-	// 启动服务器
-	if err := server.Run(); err != nil {
-		log.Fatal("服务器运行失败:", err)
-	}
+	bot.Run()
 }
