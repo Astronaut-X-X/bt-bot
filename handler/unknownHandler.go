@@ -11,4 +11,3 @@ func UnknownHandler(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
 	reply := tgbotapi.NewMessage(chatID, "未知命令。使用 /help 查看可用命令。")
 	bot.Send(reply)
 }
-
