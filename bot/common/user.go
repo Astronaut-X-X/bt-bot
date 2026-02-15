@@ -3,6 +3,8 @@ package common
 import (
 	"fmt"
 	"log"
+	"strconv"
+	"strings"
 
 	"bt-bot/database"
 	"bt-bot/database/model"
@@ -52,7 +54,7 @@ func CreateUser(userID int64) (*model.User, *model.Permissions, error) {
 	userUUID := uuid.New().String()
 	user := model.User{
 		UUID:     userUUID,
-		UserIds:  model.UserIds{userID},
+		UserIds:  strings.Join([]string{strconv.FormatInt(userID, 10)}, ","),
 		Premium:  permissionsUUID,
 		Language: "zh",
 	}
