@@ -13,18 +13,22 @@ var _ sql.Scanner = (*UserIds)(nil)
 var _ driver.Valuer = (*UserIds)(nil)
 
 func (a *UserIds) Scan(value any) error {
-	value_, ok := value.([]byte)
+	value_, ok := value.(string)
 	if !ok {
 		return errors.New("type assertion to string failed")
 	}
-	return json.Unmarshal(value_, a)
+	return json.Unmarshal([]byte(value_), &a)
 }
 
 func (a *UserIds) Value() (driver.Value, error) {
 	if a == nil {
 		return nil, nil
 	}
-	return json.Marshal(a)
+	data, err := json.Marshal(a)
+	if err != nil {
+		return nil, err
+	}
+	return string(data), nil
 }
 
 type User struct {
