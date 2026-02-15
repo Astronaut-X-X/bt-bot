@@ -13,9 +13,12 @@ func StartCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 
 	chatID := msg.Chat.ID
 	userName := common.FullName(msg.From)
-	_, _, err := common.GetUserAndPermissions(msg.From.ID)
-	if err != nil {
-		log.Println("GetUserAndPermissions error:", err)
+
+	if _, ok, err := common.GetUserUUID(msg.From.ID); !ok || err != nil {
+		if _, _, err = common.CreateUser(msg.From.ID); err != nil {
+			log.Println("CreateUser error:", err)
+			return
+		}
 	}
 
 	message := i18n.Replace(i18n.Text("start_message"), map[string]string{

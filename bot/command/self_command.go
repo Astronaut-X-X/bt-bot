@@ -16,9 +16,16 @@ func SelfCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	chatID := msg.Chat.ID
 	userName := common.FullName(msg.From)
 
-	user, permissions, err := common.GetUserAndPermissions(msg.From.ID)
+	UUID, ok, err := common.GetUserUUID(msg.From.ID)
+	if !ok || err != nil {
+		log.Println("GetUserUUID error:", err)
+		return
+	}
+
+	user, permissions, err := common.GetUserAndPermissions(UUID)
 	if err != nil {
 		log.Println("GetUserAndPermissions error:", err)
+		return
 	}
 
 	message := i18n.Replace(i18n.Text("self_message"), map[string]string{

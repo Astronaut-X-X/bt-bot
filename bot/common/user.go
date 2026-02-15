@@ -1,14 +1,14 @@
 package common
 
 import (
+	"fmt"
+	"log"
+
 	"bt-bot/database"
 	"bt-bot/database/model"
-	"errors"
-	"fmt"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
 func FullName(user *tgbotapi.User) string {
@@ -18,18 +18,19 @@ func FullName(user *tgbotapi.User) string {
 	return user.FirstName
 }
 
-func GetUserAndPermissions(userID int64) (*model.User, *model.Permissions, error) {
+func GetUserUUID(userID int64) (string, bool, error) {
 	var userMap model.UserMap
 	err := database.DB.Where("user_id = ?", userID).First(&userMap).Error
 	if err != nil {
-		return nil, nil, err
+		log.Println("GetUserUUID error:", err)
+		return "", false, err
 	}
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return CreateUser(userID)
-	}
+	return userMap.UUID, true, nil
+}
 
+func GetUserAndPermissions(UUID string) (*model.User, *model.Permissions, error) {
 	var user model.User
-	err = database.DB.Where("uuid = ?", userMap.UUID).First(&user).Error
+	err := database.DB.Where("uuid = ?", UUID).First(&user).Error
 	if err != nil {
 		return nil, nil, err
 	}
