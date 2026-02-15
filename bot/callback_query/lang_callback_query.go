@@ -14,7 +14,7 @@ func LangCallbackQueryHandler(bot *tgbotapi.BotAPI, udpate *tgbotapi.Update) {
 
 	lang := strings.TrimPrefix(data, "lang_")
 
-	uuid, ok, err := common.GetUserUUID(udpate.Message.From.ID)
+	uuid, ok, err := common.GetUserUUID(udpate.CallbackQuery.From.ID)
 	if !ok || err != nil {
 		return
 	}
