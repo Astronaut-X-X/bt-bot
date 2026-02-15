@@ -14,12 +14,20 @@ var (
 
 func init() {
 	ZH_MAP = map[string]string{
+		// Command
 		"start_message": StartMessageZH,
 		"self_message":  SelfMessageZH,
+
+		// Callback
+		"callback_message": CallbackMessageZH,
 	}
 	EN_MAP = map[string]string{
+		// Command
 		"start_message": StartMessageEN,
 		"self_message":  SelfMessageEN,
+
+		// Callback
+		"callback_message": CallbackMessageEN,
 	}
 }
 
