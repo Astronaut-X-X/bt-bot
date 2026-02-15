@@ -15,9 +15,11 @@ var (
 func init() {
 	ZH_MAP = map[string]string{
 		"start_message": StartMessageZH,
+		"self_message":  SelfMessageZH,
 	}
 	EN_MAP = map[string]string{
 		"start_message": StartMessageEN,
+		"self_message":  SelfMessageEN,
 	}
 }
 
