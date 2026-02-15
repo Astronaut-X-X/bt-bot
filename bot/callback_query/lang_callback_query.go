@@ -30,6 +30,10 @@ func LangCallbackQueryHandler(bot *tgbotapi.BotAPI, udpate *tgbotapi.Update) {
 		return
 	}
 
-	message := tgbotapi.NewMessage(udpate.CallbackQuery.Message.Chat.ID, i18n.Text("callback_message", lang))
+	text := i18n.Replace(i18n.Text("callback_message", user.Language), map[string]string{
+		i18n.CallbackMessagePlaceholderLanguage: lang,
+	})
+
+	message := tgbotapi.NewMessage(udpate.CallbackQuery.Message.Chat.ID, text)
 	bot.Send(message)
 }
