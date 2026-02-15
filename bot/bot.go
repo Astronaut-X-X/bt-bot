@@ -52,7 +52,7 @@ func (b *Bot) Run() error {
 	for update := range updates {
 		// 处理回调查询（按钮点击）
 		if update.CallbackQuery != nil {
-			callback_query.CallbackQueryHandler(b.bot, update.CallbackQuery)
+			callback_query.CallbackQueryHandler(b.bot, &update)
 			continue
 		}
 
