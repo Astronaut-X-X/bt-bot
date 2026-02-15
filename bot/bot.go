@@ -1,10 +1,12 @@
 package bot
 
 import (
-	"bt-bot/bot/command"
 	"fmt"
 	"log"
 	"strings"
+
+	"bt-bot/bot/callback_query"
+	"bt-bot/bot/command"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -50,6 +52,7 @@ func (b *Bot) Run() error {
 	for update := range updates {
 		// 处理回调查询（按钮点击）
 		if update.CallbackQuery != nil {
+			callback_query.CallbackQueryHandler(b.bot, update.CallbackQuery)
 			continue
 		}
 

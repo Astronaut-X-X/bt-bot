@@ -14,14 +14,21 @@ func StartCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	chatID := msg.Chat.ID
 	userName := common.FullName(msg.From)
 
-	if _, ok, err := common.GetUserUUID(msg.From.ID); !ok || err != nil {
+	UUID, ok, err := common.GetUserUUID(msg.From.ID)
+	if !ok || err != nil {
 		if _, _, err = common.CreateUser(msg.From.ID); err != nil {
 			log.Println("CreateUser error:", err)
 			return
 		}
 	}
 
-	message := i18n.Replace(i18n.Text("start_message"), map[string]string{
+	user, _, err := common.GetUserAndPermissions(UUID)
+	if err != nil {
+		log.Println("GetUserAndPermissions error:", err)
+		return
+	}
+
+	message := i18n.Replace(i18n.Text("start_message", user.Language), map[string]string{
 		i18n.StartMessagePlaceholderUserName:        userName,
 		i18n.StartMessagePlaceholderDownloadChannel: "@tgqpXOZ2tzXN",
 		i18n.StartMessagePlaceholderHelpChannel:     "@bt1bot1channel",

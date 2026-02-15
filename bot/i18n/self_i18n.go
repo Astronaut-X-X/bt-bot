@@ -15,8 +15,10 @@ const (
 你好，{bot_user_name}！👋
 
 个人消息：
-唯一标识: {uuid} [请保管好，不要泄露给他人]
 使用语言: {language}
+唯一标识: {uuid} 
+⚠️ 请保管好唯一标识，不要泄露给他人
+
 
 使用限制：
 - 剩余每日下载数量：{daily_download_remain}
@@ -31,8 +33,9 @@ const (
 Hello, {bot_user_name}! 👋
 
 Personal message:
-Unique identifier: {uuid} [Please keep it safe, do not leak to others]
 Using language: {language}
+Unique identifier: {uuid}
+⚠️ Please keep the unique identifier safe, do not leak to others
 
 Usage limit:
 - Remaining daily download quantity: {daily_download_remain}

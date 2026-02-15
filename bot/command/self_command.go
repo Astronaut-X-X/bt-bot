@@ -28,7 +28,7 @@ func SelfCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 		return
 	}
 
-	message := i18n.Replace(i18n.Text("self_message"), map[string]string{
+	message := i18n.Replace(i18n.Text("self_message", user.Language), map[string]string{
 		i18n.SelfMessagePlaceholderUserName:              userName,
 		i18n.SelfMessagePlaceholderUUID:                  user.UUID,
 		i18n.SelfMessagePlaceholderLanguage:              user.Language,
