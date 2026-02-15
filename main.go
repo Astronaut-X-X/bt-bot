@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"bt-bot/bot"
+	"bt-bot/database"
 	"bt-bot/utils"
 )
 
@@ -13,6 +14,11 @@ func main() {
 	if err != nil {
 		log.Fatal("加载配置失败:", err)
 	}
+
+	database.InitDatabase(database.Config{
+		Path:  "database.db",
+		Debug: false,
+	})
 
 	bot, err := bot.NewBot(config.Bot.Token, config.Bot.Debug)
 	if err != nil {

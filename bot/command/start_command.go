@@ -3,6 +3,7 @@ package command
 import (
 	"bt-bot/bot/common"
 	"bt-bot/bot/i18n"
+	"log"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -12,6 +13,10 @@ func StartCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 
 	chatID := msg.Chat.ID
 	userName := common.FullName(msg.From)
+	_, _, err := common.GetUserAndPermissions(msg.From.ID)
+	if err != nil {
+		log.Println("GetUserAndPermissions error:", err)
+	}
 
 	message := i18n.Replace(i18n.Text("start_message"), map[string]string{
 		i18n.StartMessagePlaceholderUserName:        userName,
