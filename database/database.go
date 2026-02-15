@@ -17,6 +17,7 @@ type Config struct {
 
 var models = []any{
 	&model.User{},
+	&model.UserMap{},
 	&model.Permissions{},
 }
 
