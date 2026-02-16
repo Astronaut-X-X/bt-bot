@@ -38,5 +38,16 @@ func LangCallbackQueryHandler(bot *tgbotapi.BotAPI, udpate *tgbotapi.Update) {
 	})
 
 	message := tgbotapi.NewEditMessageText(udpate.CallbackQuery.Message.Chat.ID, udpate.CallbackQuery.Message.MessageID, text)
+	message.ReplyMarkup = startReplyMarkup()
+
 	bot.Send(message)
+}
+
+func startReplyMarkup() *tgbotapi.InlineKeyboardMarkup {
+	return &tgbotapi.InlineKeyboardMarkup{
+		InlineKeyboard: [][]tgbotapi.InlineKeyboardButton{
+			{tgbotapi.NewInlineKeyboardButtonData("🇨🇳中文", "lang_zh")},
+			{tgbotapi.NewInlineKeyboardButtonData("🇺🇸English", "lang_en")},
+		},
+	}
 }
