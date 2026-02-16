@@ -22,9 +22,11 @@ func CommandHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 		case CommandStart:
 			StartCommand(bot, update)
 		case CommandHelp:
-		case CommandMagnet:
+			HelpCommand(bot, update)
 		case CommandSelf:
 			SelfCommand(bot, update)
+		case CommandMagnet:
+			MagnetCommand(bot, update)
 		}
 	}
 }
