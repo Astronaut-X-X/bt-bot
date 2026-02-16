@@ -17,6 +17,7 @@ func init() {
 		// Command
 		"start_message": StartMessageZH,
 		"self_message":  SelfMessageZH,
+		"help_message":  HelpMessageZH,
 
 		// Callback
 		"callback_message": CallbackMessageZH,
@@ -25,6 +26,7 @@ func init() {
 		// Command
 		"start_message": StartMessageEN,
 		"self_message":  SelfMessageEN,
+		"help_message":  HelpMessageEN,
 
 		// Callback
 		"callback_message": CallbackMessageEN,
