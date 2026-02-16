@@ -24,16 +24,19 @@ func LangCallbackQueryHandler(bot *tgbotapi.BotAPI, udpate *tgbotapi.Update) {
 		return
 	}
 
+	username := common.FullName(udpate.CallbackQuery.From)
 	user.Language = lang
 	err = database.DB.Save(&user).Error
 	if err != nil {
 		return
 	}
 
-	text := i18n.Replace(i18n.Text("callback_message", user.Language), map[string]string{
-		i18n.CallbackMessagePlaceholderLanguage: lang,
+	text := i18n.Replace(i18n.Text("start_message", user.Language), map[string]string{
+		i18n.StartMessagePlaceholderUserName:        username,
+		i18n.StartMessagePlaceholderDownloadChannel: "@tgqpXOZ2tzXN",
+		i18n.StartMessagePlaceholderHelpChannel:     "@bt1bot1channel",
 	})
 
-	message := tgbotapi.NewMessage(udpate.CallbackQuery.Message.Chat.ID, text)
+	message := tgbotapi.NewEditMessageText(udpate.CallbackQuery.Message.Chat.ID, udpate.CallbackQuery.Message.MessageID, text)
 	bot.Send(message)
 }
