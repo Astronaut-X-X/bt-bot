@@ -6,6 +6,7 @@ import (
 	"bt-bot/torrent"
 	"bt-bot/utils"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 
@@ -81,7 +82,7 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 
 	// 如果有文件，添加文件按钮
 	if len(info_.Files) > 0 {
-		editMsg.ReplyMarkup = createFileButtons(info_.Files, magnetLink)
+		editMsg.ReplyMarkup = createFileButtons(info_.Files, info.InfoHash().String())
 	}
 
 	bot.Send(editMsg)
@@ -89,6 +90,8 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 
 // createFileButtons 创建文件按钮
 func createFileButtons(files []metainfo.FileInfo, infoHash string) *tgbotapi.InlineKeyboardMarkup {
+	log.Println("infoHash", infoHash)
+
 	const maxButtons = 50       // Telegram 限制每个键盘最多 100 个按钮，这里设置 50 个文件按钮
 	const maxButtonTextLen = 64 // Telegram 按钮 callback_data 最大 64 字符
 	var buttons [][]tgbotapi.InlineKeyboardButton
@@ -99,24 +102,9 @@ func createFileButtons(files []metainfo.FileInfo, infoHash string) *tgbotapi.Inl
 		fileCount = maxButtons
 	}
 
-	// infoHash 可能是磁力链接, 需要转换为 hash
-	// 为安全起见, 只提取 infohash(40位16进制)
-	hash := infoHash
-	const magnetPrefix = "magnet:?xt=urn:btih:"
-	if len(hash) > len(magnetPrefix) && hash[:len(magnetPrefix)] == magnetPrefix {
-		hash = hash[len(magnetPrefix):]
-		// 若带有多余参数, 去掉
-		if ampIdx := strings.Index(hash, "&"); ampIdx != -1 {
-			hash = hash[:ampIdx]
-		}
-	}
-	if len(hash) > 40 {
-		hash = hash[:40]
-	}
-
 	// 添加所有文件按钮（全体下载，index = -1）
 	buttonText := "📄 All"
-	callbackData := fmt.Sprintf("file_%s_%d", hash, -1)
+	callbackData := fmt.Sprintf("file_%s_%d", infoHash, -1)
 	// callback_data 必须小于等于 64 字节
 	if len(callbackData) > maxButtonTextLen {
 		callbackData = callbackData[:maxButtonTextLen]
@@ -146,7 +134,7 @@ func createFileButtons(files []metainfo.FileInfo, infoHash string) *tgbotapi.Inl
 		}
 		buttonText := fmt.Sprintf("📄 %s", shortName)
 
-		callbackData := fmt.Sprintf("file_%s_%d", hash, i)
+		callbackData := fmt.Sprintf("file_%s_%d", infoHash, i)
 		// 保证 callback_data 不超过 64
 		if len(callbackData) > maxButtonTextLen {
 			callbackData = callbackData[:maxButtonTextLen]
@@ -159,7 +147,7 @@ func createFileButtons(files []metainfo.FileInfo, infoHash string) *tgbotapi.Inl
 	if len(files) > maxButtons {
 		infoButton := tgbotapi.NewInlineKeyboardButtonData(
 			fmt.Sprintf("📋 共 %d 个文件（仅显示前 %d 个）", len(files), maxButtons),
-			fmt.Sprintf("info_%s", hash),
+			fmt.Sprintf("info_%s", infoHash),
 		)
 		buttons = append(buttons, []tgbotapi.InlineKeyboardButton{infoButton})
 	}
