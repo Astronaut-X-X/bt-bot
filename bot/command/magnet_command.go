@@ -89,9 +89,8 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 
 // createFileButtons 创建文件按钮
 func createFileButtons(files []metainfo.FileInfo, infoHash string) *tgbotapi.InlineKeyboardMarkup {
-	const maxButtons = 50   // Telegram 限制每个键盘最多 100 个按钮，这里设置 50 个文件按钮
-	const buttonsPerRow = 1 // 每行显示一个按钮（文件名可能较长）
-
+	const maxButtons = 50       // Telegram 限制每个键盘最多 100 个按钮，这里设置 50 个文件按钮
+	const maxButtonTextLen = 64 // Telegram 按钮 callback_data 最大 64 字符
 	var buttons [][]tgbotapi.InlineKeyboardButton
 
 	// 计算要显示的文件数量
@@ -100,18 +99,58 @@ func createFileButtons(files []metainfo.FileInfo, infoHash string) *tgbotapi.Inl
 		fileCount = maxButtons
 	}
 
-	// 添加所有文件按钮
-	buttonText := fmt.Sprintf("📄 %s", "All")
-	callbackData := fmt.Sprintf("file_%s_%d", infoHash, -1)
+	// infoHash 可能是磁力链接, 需要转换为 hash
+	// 为安全起见, 只提取 infohash(40位16进制)
+	hash := infoHash
+	const magnetPrefix = "magnet:?xt=urn:btih:"
+	if len(hash) > len(magnetPrefix) && hash[:len(magnetPrefix)] == magnetPrefix {
+		hash = hash[len(magnetPrefix):]
+		// 若带有多余参数, 去掉
+		if ampIdx := strings.Index(hash, "&"); ampIdx != -1 {
+			hash = hash[:ampIdx]
+		}
+	}
+	if len(hash) > 40 {
+		hash = hash[:40]
+	}
+
+	// 添加所有文件按钮（全体下载，index = -1）
+	buttonText := "📄 All"
+	callbackData := fmt.Sprintf("file_%s_%d", hash, -1)
+	// callback_data 必须小于等于 64 字节
+	if len(callbackData) > maxButtonTextLen {
+		callbackData = callbackData[:maxButtonTextLen]
+	}
 	button := tgbotapi.NewInlineKeyboardButtonData(buttonText, callbackData)
 	buttons = append(buttons, []tgbotapi.InlineKeyboardButton{button})
 
 	// 为每个文件创建按钮
 	for i := 0; i < fileCount; i++ {
-		buttonText := fmt.Sprintf("📄 %d", i)
+		fileName := "File"
+		if len(files[i].PathUtf8) > 0 {
+			// 取文件名最后一部分
+			parts := files[i].PathUtf8
+			if len(parts) > 0 {
+				fileName = parts[len(parts)-1]
+			}
+		} else if len(files[i].Path) > 0 {
+			parts := files[i].Path
+			if len(parts) > 0 {
+				fileName = parts[len(parts)-1]
+			}
+		}
+		// 按钮文本: 文件名最多40字
+		shortName := fileName
+		if len([]rune(shortName)) > 40 {
+			shortName = string([]rune(shortName)[:37]) + "..."
+		}
+		buttonText := fmt.Sprintf("📄 %s", shortName)
 
-		callbackData := fmt.Sprintf("file_%s_%d", infoHash, i)
-
+		callbackData := fmt.Sprintf("file_%s_%d", hash, i)
+		// 保证 callback_data 不超过 64
+		if len(callbackData) > maxButtonTextLen {
+			callbackData = callbackData[:maxButtonTextLen]
+		}
 		button := tgbotapi.NewInlineKeyboardButtonData(buttonText, callbackData)
 		buttons = append(buttons, []tgbotapi.InlineKeyboardButton{button})
 	}
@@ -120,7 +159,7 @@ func createFileButtons(files []metainfo.FileInfo, infoHash string) *tgbotapi.Inl
 	if len(files) > maxButtons {
 		infoButton := tgbotapi.NewInlineKeyboardButtonData(
 			fmt.Sprintf("📋 共 %d 个文件（仅显示前 %d 个）", len(files), maxButtons),
-			fmt.Sprintf("info_%s", infoHash),
+			fmt.Sprintf("info_%s", hash),
 		)
 		buttons = append(buttons, []tgbotapi.InlineKeyboardButton{infoButton})
 	}
