@@ -18,12 +18,24 @@ func init() {
 		"start_message": StartMessageZH,
 		"self_message":  SelfMessageZH,
 		"help_message":  HelpMessageZH,
+
+		// Magnet
+		MagnetInvalidLinkMessageCode: MagnetInvalidLinkMessageZH,
+		MagnetProcessingMessageCode:  MagnetProcessingMessageZH,
+		MagnetErrorMessageCode:       MagnetErrorMessageZH,
+		MagnetSuccessMessageCode:     MagnetSuccessMessageZH,
 	}
 	EN_MAP = map[string]string{
 		// Command
 		"start_message": StartMessageEN,
 		"self_message":  SelfMessageEN,
 		"help_message":  HelpMessageEN,
+
+		// Magnet
+		MagnetInvalidLinkMessageCode: MagnetInvalidLinkMessageEN,
+		MagnetProcessingMessageCode:  MagnetProcessingMessageEN,
+		MagnetErrorMessageCode:       MagnetErrorMessageEN,
+		MagnetSuccessMessageCode:     MagnetSuccessMessageEN,
 	}
 }
 
