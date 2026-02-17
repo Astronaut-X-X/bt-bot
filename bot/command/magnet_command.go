@@ -114,15 +114,18 @@ func createFileButtons(files []metainfo.FileInfo, infoHash string) *tgbotapi.Inl
 
 	// 为每个文件创建按钮
 	for i := 0; i < fileCount; i++ {
+		emoji := "📄"
 		fileName := "File"
 		if len(files[i].PathUtf8) > 0 {
 			// 取文件名最后一部分
 			parts := files[i].PathUtf8
+			emoji = emojifyFilename(parts[len(parts)-1])
 			if len(parts) > 0 {
 				fileName = parts[len(parts)-1]
 			}
 		} else if len(files[i].Path) > 0 {
 			parts := files[i].Path
+			emoji = emojifyFilename(parts[len(parts)-1])
 			if len(parts) > 0 {
 				fileName = parts[len(parts)-1]
 			}
@@ -132,7 +135,7 @@ func createFileButtons(files []metainfo.FileInfo, infoHash string) *tgbotapi.Inl
 		if len([]rune(shortName)) > 40 {
 			shortName = string([]rune(shortName)[:37]) + "..."
 		}
-		buttonText := fmt.Sprintf("%s %d.%s", emojifyFilename(shortName), i+1, shortName)
+		buttonText := fmt.Sprintf("%s %d.%s", emoji, i+1, shortName)
 
 		callbackData := fmt.Sprintf("file_%s_%d", infoHash, i)
 		// 保证 callback_data 不超过 64
