@@ -76,7 +76,6 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	})
 
 	editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, successMessage)
-	editMsg.ParseMode = tgbotapi.ModeMarkdown
 
 	// // 如果有文件，添加文件按钮
 	// if len(info.Files) > 0 {
