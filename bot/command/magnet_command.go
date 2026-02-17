@@ -65,7 +65,7 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 		if len(file.PathUtf8) > 0 {
 			path = file.PathUtf8
 		}
-		fileLine := fmt.Sprintf("• %d.%s (%s)", index, strings.Join(path, "/"), utils.FormatBytesToSizeString(file.Length))
+		fileLine := fmt.Sprintf("• %d.%s (%s)", index+1, strings.Join(path, "/"), utils.FormatBytesToSizeString(file.Length))
 		fileList = append(fileList, fileLine)
 	}
 
@@ -103,7 +103,7 @@ func createFileButtons(files []metainfo.FileInfo, infoHash string) *tgbotapi.Inl
 	}
 
 	// 添加所有文件按钮（全体下载，index = -1）
-	buttonText := "📄 All"
+	buttonText := "📄 All Files"
 	callbackData := fmt.Sprintf("file_%s_%d", infoHash, -1)
 	// callback_data 必须小于等于 64 字节
 	if len(callbackData) > maxButtonTextLen {
@@ -132,7 +132,7 @@ func createFileButtons(files []metainfo.FileInfo, infoHash string) *tgbotapi.Inl
 		if len([]rune(shortName)) > 40 {
 			shortName = string([]rune(shortName)[:37]) + "..."
 		}
-		buttonText := fmt.Sprintf("📄 %s", shortName)
+		buttonText := fmt.Sprintf("📄 %d.%s", i+1, shortName)
 
 		callbackData := fmt.Sprintf("file_%s_%d", infoHash, i)
 		// 保证 callback_data 不超过 64

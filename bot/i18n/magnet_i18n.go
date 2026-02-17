@@ -66,6 +66,7 @@ const (
 🗃️ 文件数量：{file_count}
 📋 文件列表：
 {file_list}
+选择文件下载：
 `
 	MagnetSuccessMessageEN = `
 ✅ Parsing successful
@@ -76,5 +77,6 @@ const (
 🗃️ File count: {file_count}
 📋 File list: 
 {file_list}
+Select file to download:
 `
 )
