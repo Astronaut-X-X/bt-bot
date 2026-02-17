@@ -21,7 +21,7 @@ func main() {
 		Debug: false,
 	})
 
-	if err := torrent.InitTorrentClient(true); err != nil {
+	if err := torrent.InitTorrentClient(false); err != nil {
 		log.Fatal("初始化 torrent 客户端失败:", err)
 	}
 
