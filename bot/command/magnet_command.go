@@ -132,7 +132,7 @@ func createFileButtons(files []metainfo.FileInfo, infoHash string) *tgbotapi.Inl
 		if len([]rune(shortName)) > 40 {
 			shortName = string([]rune(shortName)[:37]) + "..."
 		}
-		buttonText := fmt.Sprintf("📄 %d.%s", i+1, shortName)
+		buttonText := fmt.Sprintf("%s %d.%s", emojifyFilename(shortName), i+1, shortName)
 
 		callbackData := fmt.Sprintf("file_%s_%d", infoHash, i)
 		// 保证 callback_data 不超过 64
@@ -154,4 +154,62 @@ func createFileButtons(files []metainfo.FileInfo, infoHash string) *tgbotapi.Inl
 
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(buttons...)
 	return &keyboard
+}
+
+func emojifyFilename(filename string) string {
+	// 根据文件后缀返回带有 emoji 的文件名
+	extToEmoji := map[string]string{
+		".mp4":     "🎬",
+		".mkv":     "🎥",
+		".avi":     "📽️",
+		".mov":     "🎞️",
+		".ts":      "📼",
+		".mp3":     "🎵",
+		".flac":    "🎶",
+		".wav":     "🔊",
+		".ape":     "🎼",
+		".aac":     "🎧",
+		".ogg":     "🎶",
+		".jpg":     "🖼️",
+		".jpeg":    "🖼️",
+		".png":     "📸",
+		".gif":     "🎞️",
+		".webp":    "🌆",
+		".bmp":     "🖼️",
+		".zip":     "🗜️",
+		".rar":     "🗂️",
+		".7z":      "📦",
+		".tar":     "📦",
+		".gz":      "🗄️",
+		".pdf":     "📑",
+		".epub":    "📚",
+		".txt":     "📄",
+		".doc":     "📝",
+		".docx":    "📝",
+		".ppt":     "📊",
+		".pptx":    "📊",
+		".xls":     "📈",
+		".xlsx":    "📈",
+		".apk":     "🤖",
+		".exe":     "🖥️",
+		".iso":     "💿",
+		".torrent": "🧲",
+	}
+
+	ext := ""
+	for i := len(filename) - 1; i >= 0; i-- {
+		if filename[i] == '.' {
+			ext = filename[i:]
+			break
+		}
+	}
+	emoji := ""
+	if val, ok := extToEmoji[ext]; ok {
+		emoji = val
+	}
+	if emoji != "" {
+		return emoji + " " + filename
+	} else {
+		return filename
+	}
 }
