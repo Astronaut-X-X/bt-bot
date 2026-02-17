@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/anacrolix/torrent/metainfo"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -58,12 +59,12 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	info_ := info.Info()
 
 	fileList := make([]string, 0)
-	for _, file := range info_.Files {
+	for index, file := range info_.Files {
 		path := file.Path
 		if len(file.PathUtf8) > 0 {
 			path = file.PathUtf8
 		}
-		fileLine := fmt.Sprintf("%s (%s)", strings.Join(path, "/"), utils.FormatBytesToSizeString(file.Length))
+		fileLine := fmt.Sprintf("• %d.%s (%s)", index, strings.Join(path, "/"), utils.FormatBytesToSizeString(file.Length))
 		fileList = append(fileList, fileLine)
 	}
 
@@ -78,10 +79,52 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 
 	editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, successMessage)
 
-	// // 如果有文件，添加文件按钮
-	// if len(info.Files) > 0 {
-	// 	editMsg.ReplyMarkup = createFileButtons(info.Files, info.InfoHash)
-	// }
+	// 如果有文件，添加文件按钮
+	if len(info_.Files) > 0 {
+		editMsg.ReplyMarkup = createFileButtons(info_.Files, magnetLink)
+	}
 
 	bot.Send(editMsg)
+}
+
+// createFileButtons 创建文件按钮
+func createFileButtons(files []metainfo.FileInfo, infoHash string) *tgbotapi.InlineKeyboardMarkup {
+	const maxButtons = 50   // Telegram 限制每个键盘最多 100 个按钮，这里设置 50 个文件按钮
+	const buttonsPerRow = 1 // 每行显示一个按钮（文件名可能较长）
+
+	var buttons [][]tgbotapi.InlineKeyboardButton
+
+	// 计算要显示的文件数量
+	fileCount := len(files)
+	if fileCount > maxButtons {
+		fileCount = maxButtons
+	}
+
+	// 添加所有文件按钮
+	buttonText := fmt.Sprintf("📄 %s", "All")
+	callbackData := fmt.Sprintf("file_%s_%d", infoHash, -1)
+	button := tgbotapi.NewInlineKeyboardButtonData(buttonText, callbackData)
+	buttons = append(buttons, []tgbotapi.InlineKeyboardButton{button})
+
+	// 为每个文件创建按钮
+	for i := 0; i < fileCount; i++ {
+		buttonText := fmt.Sprintf("📄 %d", i)
+
+		callbackData := fmt.Sprintf("file_%s_%d", infoHash, i)
+
+		button := tgbotapi.NewInlineKeyboardButtonData(buttonText, callbackData)
+		buttons = append(buttons, []tgbotapi.InlineKeyboardButton{button})
+	}
+
+	// 如果文件数量超过显示限制，添加"查看更多"提示
+	if len(files) > maxButtons {
+		infoButton := tgbotapi.NewInlineKeyboardButtonData(
+			fmt.Sprintf("📋 共 %d 个文件（仅显示前 %d 个）", len(files), maxButtons),
+			fmt.Sprintf("info_%s", infoHash),
+		)
+		buttons = append(buttons, []tgbotapi.InlineKeyboardButton{infoButton})
+	}
+
+	keyboard := tgbotapi.NewInlineKeyboardMarkup(buttons...)
+	return &keyboard
 }

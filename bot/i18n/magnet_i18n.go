@@ -59,20 +59,22 @@ Possible reasons:
 const (
 	MagnetSuccessMessageZH = `
 ✅ 解析成功
-磁力链接：{magnet_link}
-文件名：{file_name}
-文件大小：{file_size}
-文件数量：{file_count}
-文件列表：
+
+🧲 磁力链接：{magnet_link}
+📄 文件名：{file_name}
+📦 文件大小：{file_size}
+🗃️ 文件数量：{file_count}
+📋 文件列表：
 {file_list}
 `
 	MagnetSuccessMessageEN = `
 ✅ Parsing successful
-Magnet link: {magnet_link}
-File name: {file_name}
-File size: {file_size}
-File count: {file_count}
-File list: 
+
+🧲 Magnet Link: {magnet_link}
+📄 File name: {file_name}
+📦 File size: {file_size}
+🗃️ File count: {file_count}
+📋 File list: 
 {file_list}
 `
 )
