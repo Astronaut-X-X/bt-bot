@@ -69,10 +69,11 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 
 	successMessage := i18n.Text(i18n.MagnetSuccessMessageCode, user.Language)
 	successMessage = i18n.Replace(successMessage, map[string]string{
-		i18n.MagnetMessagePlaceholderFileName:  info_.Name,
-		i18n.MagnetMessagePlaceholderFileSize:  strconv.FormatInt(info_.TotalLength(), 10),
-		i18n.MagnetMessagePlaceholderFileCount: strconv.Itoa(len(info_.Files)),
-		i18n.MagnetMessagePlaceholderFileList:  strings.Join(fileList, "\n"),
+		i18n.MagnetMessagePlaceholderMagnetLink: magnetLink,
+		i18n.MagnetMessagePlaceholderFileName:   info_.Name,
+		i18n.MagnetMessagePlaceholderFileSize:   utils.FormatBytesToSizeString(info_.TotalLength()),
+		i18n.MagnetMessagePlaceholderFileCount:  strconv.Itoa(len(info_.Files)),
+		i18n.MagnetMessagePlaceholderFileList:   strings.Join(fileList, "\n"),
 	})
 
 	editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, successMessage)
