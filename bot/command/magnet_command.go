@@ -3,6 +3,7 @@ package command
 import (
 	"bt-bot/bot/common"
 	"bt-bot/bot/i18n"
+	"bt-bot/database/model"
 	"bt-bot/torrent"
 	"bt-bot/utils"
 	"fmt"
@@ -10,7 +11,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/anacrolix/torrent/metainfo"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -45,19 +45,52 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	processingMsg := tgbotapi.NewMessage(chatID, processingMessage)
 	sentMsg, _ := bot.Send(processingMsg)
 
-	info, err := torrent.ParseMagnetLink(magnetLink)
-	if err != nil {
-		errorMessage := i18n.Text(i18n.MagnetErrorMessageCode, user.Language)
-		errorMessage = i18n.Replace(errorMessage, map[string]string{
-			i18n.MagnetMessagePlaceholderErrorMessage: err.Error(),
-		})
-		editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, errorMessage)
-		bot.Send(editMsg)
-		return
-	}
+	var info_ model.Torrent
 
-	// 存储
-	info_ := info.Info()
+	infoHash := torrent.ExtractTorrentInfoHash(magnetLink)
+	dbInfo, err := common.GetTorrentInfo(infoHash)
+	if err != nil {
+		log.Println("common.GetTorrentInfo err: ", err)
+	}
+	if dbInfo != nil {
+		info_ = *dbInfo
+	} else {
+		// 提取 InfoHash
+		info, err := torrent.ParseMagnetLink(magnetLink)
+		if err != nil {
+			errorMessage := i18n.Text(i18n.MagnetErrorMessageCode, user.Language)
+			errorMessage = i18n.Replace(errorMessage, map[string]string{
+				i18n.MagnetMessagePlaceholderErrorMessage: err.Error(),
+			})
+			editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, errorMessage)
+			bot.Send(editMsg)
+			return
+		}
+
+		parseInfo := info.Info()
+
+		// 存储
+		info_.InfoHash = infoHash
+		info_.Length = parseInfo.Length
+		info_.Pieces = parseInfo.Pieces
+		info_.PieceLength = parseInfo.PieceLength
+		info_.Name = parseInfo.Name
+		info_.NameUtf8 = parseInfo.NameUtf8
+		info_.IsDir = parseInfo.IsDir()
+		info_.Files = make([]model.TorrentFile, 0, 16)
+
+		for _, file := range parseInfo.Files {
+			info_.Files = append(info_.Files, model.TorrentFile{
+				InfoHash: infoHash,
+				Path:     strings.Join(file.Path, "/"),
+				PathUtf8: strings.Join(file.PathUtf8, "/"),
+			})
+		}
+
+		if err := common.SaveTorrentInfo(infoHash, parseInfo); err != nil {
+			log.Panicln("common.SaveTorrentInfo err: ", err)
+		}
+	}
 
 	fileList := make([]string, 0)
 	for index, file := range info_.Files {
@@ -65,7 +98,7 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 		if len(file.PathUtf8) > 0 {
 			path = file.PathUtf8
 		}
-		fileLine := fmt.Sprintf("• %d.%s (%s)", index+1, strings.Join(path, "/"), utils.FormatBytesToSizeString(file.Length))
+		fileLine := fmt.Sprintf("• %d.%s (%s)", index+1, path, utils.FormatBytesToSizeString(file.Length))
 		fileList = append(fileList, fileLine)
 	}
 
@@ -82,14 +115,14 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 
 	// 如果有文件，添加文件按钮
 	if len(info_.Files) > 0 {
-		editMsg.ReplyMarkup = createFileButtons(info_.Files, info.InfoHash().String())
+		editMsg.ReplyMarkup = createFileButtons(info_.Files, infoHash)
 	}
 
 	bot.Send(editMsg)
 }
 
 // createFileButtons 创建文件按钮
-func createFileButtons(files []metainfo.FileInfo, infoHash string) *tgbotapi.InlineKeyboardMarkup {
+func createFileButtons(files []model.TorrentFile, infoHash string) *tgbotapi.InlineKeyboardMarkup {
 	log.Println("infoHash", infoHash)
 
 	const maxButtons = 50       // Telegram 限制每个键盘最多 100 个按钮，这里设置 50 个文件按钮
@@ -116,19 +149,13 @@ func createFileButtons(files []metainfo.FileInfo, infoHash string) *tgbotapi.Inl
 	for i := 0; i < fileCount; i++ {
 		emoji := "📄"
 		fileName := "File"
-		if len(files[i].PathUtf8) > 0 {
-			// 取文件名最后一部分
-			parts := files[i].PathUtf8
-			emoji = emojifyFilename(parts[len(parts)-1])
-			if len(parts) > 0 {
-				fileName = parts[len(parts)-1]
-			}
-		} else if len(files[i].Path) > 0 {
-			parts := files[i].Path
-			emoji = emojifyFilename(parts[len(parts)-1])
-			if len(parts) > 0 {
-				fileName = parts[len(parts)-1]
-			}
+		path := files[i].PathUtf8
+		if len(path) == 0 {
+			path = files[i].Path
+		}
+		emoji = emojifyFilename(getFileExt(path))
+		if len(path) > 0 {
+			fileName = getFileExt(path)
 		}
 		// 按钮文本: 文件名最多40字
 		shortName := fileName
@@ -215,4 +242,15 @@ func emojifyFilename(filename string) string {
 	} else {
 		return filename
 	}
+}
+
+func getFileExt(filename string) string {
+	ext := ""
+	for i := len(filename) - 1; i >= 0; i-- {
+		if filename[i] == '.' {
+			ext = filename[i:]
+			break
+		}
+	}
+	return ext
 }

@@ -1,6 +1,8 @@
 package torrent
 
-import "strings"
+import (
+	"strings"
+)
 
 // ExtractMagnetLink 从文本中提取磁力链接
 func ExtractMagnetLink(text string) string {
@@ -40,4 +42,27 @@ func ExtractMagnetLink(text string) string {
 	}
 
 	return ""
+}
+
+func ExtractTorrentInfoHash(magnetLink string) string {
+	// magnetLink 格式: magnet:?xt=urn:btih:<infohash>[&...]
+	if !strings.HasPrefix(magnetLink, "magnet:") {
+		return ""
+	}
+	startIdx := strings.Index(magnetLink, "xt=urn:btih:")
+	if startIdx == -1 {
+		return ""
+	}
+	// 找到 xt=urn:btih: 后面的部分
+	substr := magnetLink[startIdx+len("xt=urn:btih:"):]
+	endIdx := strings.IndexAny(substr, "&")
+	var infoHash string
+	if endIdx != -1 {
+		infoHash = substr[:endIdx]
+	} else {
+		infoHash = substr
+	}
+	// infohash 可能带有大写, 我们统一转为小写
+	infoHash = strings.ToLower(infoHash)
+	return infoHash
 }

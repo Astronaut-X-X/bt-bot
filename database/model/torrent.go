@@ -1,10 +1,17 @@
 package model
 
 type Torrent struct {
-	PieceLength int64  `bencode:"piece length"`
-	Pieces      []byte `bencode:"pieces"`
-	Name        string `bencode:"name"`
-	Length      int64  `bencode:"length,omitempty"`
-	Private     *bool  `bencode:"private,omitempty"`
-	Source      string `bencode:"source,omitempty"`
+	TorrentInfo
+	Files []TorrentFile
+}
+
+func (info *Torrent) TotalLength() (ret int64) {
+	if info.IsDir {
+		for _, fi := range info.Files {
+			ret += fi.Length
+		}
+	} else {
+		ret = info.Length
+	}
+	return
 }
