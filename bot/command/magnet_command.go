@@ -82,6 +82,7 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 		for _, file := range parseInfo.Files {
 			info_.Files = append(info_.Files, model.TorrentFile{
 				InfoHash: infoHash,
+				Length:   file.Length,
 				Path:     strings.Join(file.Path, "/"),
 				PathUtf8: strings.Join(file.PathUtf8, "/"),
 			})
