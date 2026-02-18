@@ -19,6 +19,8 @@ var models = []any{
 	&model.User{},
 	&model.UserMap{},
 	&model.Permissions{},
+	&model.TorrentInfo{},
+	&model.TorrentFile{},
 }
 
 func InitDatabase(config Config) error {
