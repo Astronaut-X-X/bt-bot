@@ -62,6 +62,7 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	})
 
 	editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, successMessage)
+	editMsg.ReplyMarkup = createFileButtons(info.Files, info.InfoHash)
 
 	bot.Send(editMsg)
 }
@@ -110,6 +111,9 @@ func parseMagnetLink(magnetLink string) (*model.Torrent, error) {
 		info_.Files = make([]model.TorrentFile, 0, 16)
 
 		for _, file := range parseInfo.Files {
+			log.Println("file.Path: ", file.Path)
+			log.Println("file.PathUtf8: ", file.PathUtf8)
+			log.Println("file.Length: ", file.Length)
 			info_.Files = append(info_.Files, model.TorrentFile{
 				InfoHash: infoHash,
 				Length:   file.Length,
