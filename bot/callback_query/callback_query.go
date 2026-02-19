@@ -12,6 +12,8 @@ func CallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	switch {
 	case strings.HasPrefix(data, "lang_"):
 		LangCallbackQueryHandler(bot, update)
+	case strings.HasPrefix(data, "file_"):
+		FileCallbackQueryHandler(bot, update)
 	default:
 		return
 	}

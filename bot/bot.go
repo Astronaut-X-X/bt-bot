@@ -69,7 +69,9 @@ func (b *Bot) Run() error {
 			// 处理普通文本消息
 			// 检查是否包含磁力链接
 			if containsMagnetLink(msg.Text) {
+				command.MagnetCommand(b.bot, &update)
 			} else {
+				command.StartCommand(b.bot, &update)
 			}
 		}()
 	}
