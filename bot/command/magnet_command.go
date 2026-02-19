@@ -56,7 +56,7 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	successMessage = i18n.Replace(successMessage, map[string]string{
 		i18n.MagnetMessagePlaceholderMagnetLink: magnetLink,
 		i18n.MagnetMessagePlaceholderFileName:   info.Name,
-		i18n.MagnetMessagePlaceholderFileSize:   utils.FormatBytesToSizeString(info.Length),
+		i18n.MagnetMessagePlaceholderFileSize:   utils.FormatBytesToSizeString(info.TotalLength()),
 		i18n.MagnetMessagePlaceholderFileCount:  strconv.Itoa(len(info.Files)),
 		i18n.MagnetMessagePlaceholderFileList:   strings.Join(fileList(info.Files), "\n"),
 	})
