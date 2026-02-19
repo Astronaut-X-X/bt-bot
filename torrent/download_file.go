@@ -114,6 +114,8 @@ func DownloadFile(
 	timeoutCallback func(),
 	successCallback func(),
 ) ([]string, error) {
+	log.Printf("⏱️ 开始下载文件: %s (文件索引: %d)", magnetLink, fileIndex)
+
 	// 解析磁力链接，获取 Torrent 句柄
 	t, err := ParseMagnetLink(magnetLink)
 	if err != nil {
@@ -132,6 +134,8 @@ func DownloadFile(
 
 	// 开始下载（内部仍会下载所有已设置为有优先级的片段）
 	t.DownloadAll()
+
+	log.Printf("⏱️ 开始下载文件: %s (文件索引: %d)", magnetLink, fileIndex)
 
 	// 估算下载所需时间（100KB/s），最低2小时，加30分钟缓冲，最长不超6小时
 	minSpeed := int64(100 * 1024) // 100KB/s
