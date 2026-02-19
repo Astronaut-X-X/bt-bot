@@ -99,32 +99,11 @@ func parseMagnetLink(magnetLink string) (*model.Torrent, error) {
 		}()
 
 		parseInfo := info.Info()
-
-		// 存储
-		info_.InfoHash = infoHash
-		info_.Length = parseInfo.Length
-		info_.Pieces = parseInfo.Pieces
-		info_.PieceLength = parseInfo.PieceLength
-		info_.Name = parseInfo.Name
-		info_.NameUtf8 = parseInfo.NameUtf8
-		info_.IsDir = parseInfo.IsDir()
-		info_.Files = make([]model.TorrentFile, 0, 16)
-
-		for _, file := range parseInfo.Files {
-			log.Println("file.Path: ", file.Path)
-			log.Println("file.PathUtf8: ", file.PathUtf8)
-			log.Println("file.Length: ", file.Length)
-			info_.Files = append(info_.Files, model.TorrentFile{
-				InfoHash: infoHash,
-				Length:   file.Length,
-				Path:     strings.Join(file.Path, "/"),
-				PathUtf8: strings.Join(file.PathUtf8, "/"),
-			})
-		}
-
-		if err := common.SaveTorrentInfo(infoHash, parseInfo); err != nil {
+		torrentInfo, err := common.SaveTorrentInfo(infoHash, parseInfo)
+		if err != nil {
 			log.Panicln("common.SaveTorrentInfo err: ", err)
 		}
+		info_ = *torrentInfo
 	}
 
 	return &info_, nil
@@ -169,25 +148,16 @@ func createFileButtons(files []model.TorrentFile, infoHash string) *tgbotapi.Inl
 
 	// 为每个文件创建按钮
 	for i := 0; i < fileCount; i++ {
-		emoji := "📄"
-		fileName := "File"
 		path := files[i].PathUtf8
 		if len(path) == 0 {
 			path = files[i].Path
 		}
-		emoji = emojifyFilename(getFileExt(path))
-		if len(path) > 0 {
-			fileName = getFileExt(path)
-		}
-		// 按钮文本: 文件名最多40字
-		shortName := fileName
-		if len([]rune(shortName)) > 40 {
-			shortName = string([]rune(shortName)[:37]) + "..."
-		}
-		buttonText := fmt.Sprintf("%s %d.%s", emoji, i+1, shortName)
 
-		callbackData := fmt.Sprintf("file_%s_%d", infoHash, i)
-		// 保证 callback_data 不超过 64
+		emoji := emojifyFilename(getFileExt(path))
+		fileName := path
+
+		buttonText := fmt.Sprintf("%s %d.%s", emoji, i+1, fileName)
+		callbackData := fmt.Sprintf("file_%s_%d", infoHash, files[i].Index)
 		if len(callbackData) > maxButtonTextLen {
 			callbackData = callbackData[:maxButtonTextLen]
 		}

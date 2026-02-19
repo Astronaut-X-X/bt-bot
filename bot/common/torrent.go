@@ -8,7 +8,7 @@ import (
 	"github.com/anacrolix/torrent/metainfo"
 )
 
-func SaveTorrentInfo(infoHash string, info *metainfo.Info) error {
+func SaveTorrentInfo(infoHash string, info *metainfo.Info) (*model.Torrent, error) {
 	torrentInfo := &model.TorrentInfo{
 		InfoHash:    infoHash,
 		Name:        info.Name,
@@ -20,20 +20,31 @@ func SaveTorrentInfo(infoHash string, info *metainfo.Info) error {
 	}
 
 	if err := database.DB.Save(torrentInfo).Error; err != nil {
-		return err
+		return nil, err
 	}
 
 	torrentFiles := make([]model.TorrentFile, 0)
-	for _, file := range info.Files {
+	for index, file := range info.Files {
 		torrentFiles = append(torrentFiles, model.TorrentFile{
 			InfoHash: infoHash,
+			Index:    index,
 			Length:   file.Length,
 			Path:     strings.Join(file.Path, "/"),
 			PathUtf8: strings.Join(file.PathUtf8, "/"),
 		})
 	}
 
-	return database.DB.Save(torrentFiles).Error
+	if err := database.DB.Save(torrentFiles).Error; err != nil {
+		return &model.Torrent{
+			TorrentInfo: *torrentInfo,
+			Files:       torrentFiles,
+		}, err
+	}
+
+	return &model.Torrent{
+		TorrentInfo: *torrentInfo,
+		Files:       torrentFiles,
+	}, nil
 }
 
 func GetTorrentInfo(infoHash string) (*model.Torrent, error) {
@@ -43,7 +54,7 @@ func GetTorrentInfo(infoHash string) (*model.Torrent, error) {
 	}
 
 	var torrentFiles []model.TorrentFile
-	if err := database.DB.Where("info_hash = ?", infoHash).Find(&torrentFiles).Error; err != nil {
+	if err := database.DB.Where("info_hash = ?", infoHash).Find(&torrentFiles).Order("index ASC").Error; err != nil {
 		return nil, err
 	}
 
