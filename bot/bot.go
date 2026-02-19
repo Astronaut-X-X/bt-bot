@@ -50,26 +50,28 @@ func (b *Bot) Run() error {
 
 	// 处理更新
 	for update := range updates {
-		// 处理回调查询（按钮点击）
-		if update.CallbackQuery != nil {
-			callback_query.CallbackQueryHandler(b.bot, &update)
-			continue
-		}
+		go func() {
+			// 处理回调查询（按钮点击）
+			if update.CallbackQuery != nil {
+				callback_query.CallbackQueryHandler(b.bot, &update)
+				return
+			}
 
-		if update.Message == nil {
-			continue
-		}
+			if update.Message == nil {
+				return
+			}
 
-		msg := update.Message
+			msg := update.Message
 
-		// 处理命令
-		command.CommandHandler(b.bot, &update)
+			// 处理命令
+			command.CommandHandler(b.bot, &update)
 
-		// 处理普通文本消息
-		// 检查是否包含磁力链接
-		if containsMagnetLink(msg.Text) {
-		} else {
-		}
+			// 处理普通文本消息
+			// 检查是否包含磁力链接
+			if containsMagnetLink(msg.Text) {
+			} else {
+			}
+		}()
 	}
 
 	return nil
