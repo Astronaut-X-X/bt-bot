@@ -153,8 +153,8 @@ func createFileButtons(files []model.TorrentFile, infoHash string) *tgbotapi.Inl
 			path = files[i].Path
 		}
 
-		emoji := emojifyFilename(getFileExt(path))
 		fileName := path
+		emoji := emojifyFilename(fileName)
 
 		buttonText := fmt.Sprintf("%s %d.%s", emoji, i+1, fileName)
 		callbackData := fmt.Sprintf("file_%s_%d", infoHash, files[i].Index)
@@ -232,17 +232,6 @@ func emojifyFilename(filename string) string {
 	if emoji != "" {
 		return emoji + " " + filename
 	} else {
-		return filename
+		return "📄"
 	}
-}
-
-func getFileExt(filename string) string {
-	ext := ""
-	for i := len(filename) - 1; i >= 0; i-- {
-		if filename[i] == '.' {
-			ext = filename[i:]
-			break
-		}
-	}
-	return ext
 }
