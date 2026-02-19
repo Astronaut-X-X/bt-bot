@@ -17,13 +17,9 @@ import (
 func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	msg := update.Message
 	chatID := msg.Chat.ID
+	userID := msg.From.ID
 
-	uuid, ok, err := common.GetUserUUID(msg.From.ID)
-	if !ok || err != nil {
-		return
-	}
-
-	user, _, err := common.GetUserAndPermissions(uuid)
+	user, _, err := common.UserAndPermissions(userID)
 	if err != nil {
 		return
 	}

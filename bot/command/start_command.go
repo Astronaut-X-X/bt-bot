@@ -10,21 +10,12 @@ import (
 
 func StartCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	msg := update.Message
-
 	chatID := msg.Chat.ID
+
 	userName := common.FullName(msg.From)
-
-	UUID, ok, err := common.GetUserUUID(msg.From.ID)
-	if !ok || err != nil {
-		if _, _, err = common.CreateUser(msg.From.ID); err != nil {
-			log.Println("CreateUser error:", err)
-			return
-		}
-	}
-
-	user, _, err := common.GetUserAndPermissions(UUID)
+	user, _, err := common.UserAndPermissions(msg.From.ID)
 	if err != nil {
-		log.Println("GetUserAndPermissions error:", err)
+		log.Println("UserAndPermissions error:", err)
 		return
 	}
 

@@ -1,8 +1,8 @@
 package common
 
 import (
+	"errors"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 
@@ -11,6 +11,7 @@ import (
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 func FullName(user *tgbotapi.User) string {
@@ -20,30 +21,63 @@ func FullName(user *tgbotapi.User) string {
 	return user.FirstName
 }
 
+func UserAndPermissions(userID int64) (*model.User, *model.Permissions, error) {
+	uuid, ok, err := GetUserUUID(userID)
+	if !ok {
+		user, permissions, err := CreateUser(userID)
+		if err != nil {
+			return nil, nil, err
+		}
+		return user, permissions, nil
+	}
+	// 其他错误
+	if err != nil {
+		return nil, nil, err
+	}
+
+	user, err := GetUser(uuid)
+	if err != nil {
+		return nil, nil, err
+	}
+	permissions, err := GetPermissions(user.Premium)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return user, permissions, nil
+
+}
+
 func GetUserUUID(userID int64) (string, bool, error) {
 	var userMap model.UserMap
 	err := database.DB.Where("user_id = ?", userID).First(&userMap).Error
+	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+		return "", false, nil
+	}
 	if err != nil {
-		log.Println("GetUserUUID error:", err)
-		return "", false, err
+		return "", true, err
 	}
 	return userMap.UUID, true, nil
 }
 
-func GetUserAndPermissions(UUID string) (*model.User, *model.Permissions, error) {
+func GetUser(uuid string) (*model.User, error) {
 	var user model.User
-	err := database.DB.Where("uuid = ?", UUID).First(&user).Error
+	err := database.DB.Where("uuid = ?", uuid).First(&user).Error
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
+	return &user, nil
+}
+
+func GetPermissions(premium string) (*model.Permissions, error) {
 	var permissions model.Permissions
-	err = database.DB.Where("uuid = ?", user.Premium).First(&permissions).Error
+	err := database.DB.Where("uuid = ?", premium).First(&permissions).Error
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return &user, &permissions, nil
+	return &permissions, nil
 }
 
 func CreateUser(userID int64) (*model.User, *model.Permissions, error) {

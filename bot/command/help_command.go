@@ -11,15 +11,9 @@ import (
 func HelpCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	chatID := update.Message.Chat.ID
 
-	uuid, ok, err := common.GetUserUUID(update.Message.From.ID)
-	if !ok || err != nil {
-		log.Println("GetUserUUID error:", err)
-		return
-	}
-
-	user, _, err := common.GetUserAndPermissions(uuid)
+	user, _, err := common.UserAndPermissions(update.Message.From.ID)
 	if err != nil {
-		log.Println("GetUserAndPermissions error:", err)
+		log.Println("UserAndPermissions error:", err)
 		return
 	}
 
