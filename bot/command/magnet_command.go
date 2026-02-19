@@ -84,6 +84,18 @@ func parseMagnetLink(magnetLink string) (*model.Torrent, error) {
 		if err != nil {
 			return nil, err
 		}
+		// 使用 defer 确保 torrent 在使用完后被清理
+		defer func() {
+			if info != nil {
+				// 安全地调用 Drop，捕获可能的 panic
+				defer func() {
+					if r := recover(); r != nil {
+						// 如果 Drop 失败（torrent 不存在等），忽略 panic
+					}
+				}()
+				info.Drop()
+			}
+		}()
 
 		parseInfo := info.Info()
 

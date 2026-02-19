@@ -3,6 +3,7 @@ package torrent
 import (
 	"context"
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
@@ -45,6 +46,22 @@ func ParseMagnetLink(magnet string) (*torrent.Torrent, error) {
 		return nil, err
 	}
 
+	// 使用标志位跟踪是否已经 Drop，避免重复调用
+	dropped := false
+	dropOnce := func() {
+		if !dropped {
+			dropped = true
+			// 安全地调用 Drop，捕获可能的 panic
+			defer func() {
+				if r := recover(); r != nil {
+					// 如果 Drop 失败（torrent 不存在等），忽略 panic
+					log.Println("Drop torrent failed: ", r)
+				}
+			}()
+			t.Drop()
+		}
+	}
+
 	// 等待元信息获取完成（设置超时）
 	timeout := 3 * time.Minute
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -54,19 +71,20 @@ func ParseMagnetLink(magnet string) (*torrent.Torrent, error) {
 	case <-t.GotInfo():
 		// 元信息获取成功
 	case <-ctx.Done():
-		// 超时
-		t.Drop()
+		// 超时，清理 torrent
+		dropOnce()
 		return nil, fmt.Errorf("获取磁力链接元信息超时. Magnet: %s. 等待时长: %v, 错误: %w, 详细错误信息: %+v", magnet, timeout, ctx.Err(), ctx.Err())
 	}
 
 	info := t.Info()
 	if info == nil {
-		t.Drop()
+		// Info 为 nil，清理 torrent
+		dropOnce()
 		return nil, fmt.Errorf("无法获取磁力链接元信息，Info为nil. Magnet: %s", magnet)
 	}
 
-	t.Drop()
-
+	// 成功获取信息，返回 torrent 供调用者使用
+	// 调用者负责在使用完后调用 Drop() 清理资源
 	return t, nil
 
 }
