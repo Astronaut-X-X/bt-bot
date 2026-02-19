@@ -148,7 +148,8 @@ func createFileButtons(files []model.TorrentFile, infoHash string) *tgbotapi.Inl
 
 	// 为每个文件创建按钮
 	for i := 0; i < fileCount; i++ {
-		path := files[i].PathUtf8
+		file := files[i]
+		path := file.PathUtf8
 		if len(path) == 0 {
 			path = files[i].Path
 		}
@@ -156,8 +157,8 @@ func createFileButtons(files []model.TorrentFile, infoHash string) *tgbotapi.Inl
 		fileName := path
 		emoji := emojifyFilename(fileName)
 
-		buttonText := fmt.Sprintf("%s %d.%s", emoji, i+1, fileName)
-		callbackData := fmt.Sprintf("file_%s_%d", infoHash, files[i].Index)
+		buttonText := fmt.Sprintf("%s %d.%s", emoji, file.Index+1, fileName)
+		callbackData := fmt.Sprintf("file_%s_%d", infoHash, file.Index)
 		if len(callbackData) > maxButtonTextLen {
 			callbackData = callbackData[:maxButtonTextLen]
 		}
@@ -230,7 +231,7 @@ func emojifyFilename(filename string) string {
 		emoji = val
 	}
 	if emoji != "" {
-		return emoji + " " + filename
+		return emoji
 	} else {
 		return "📄"
 	}
