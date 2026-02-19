@@ -24,6 +24,12 @@ func init() {
 		MagnetProcessingMessageCode:  MagnetProcessingMessageZH,
 		MagnetErrorMessageCode:       MagnetErrorMessageZH,
 		MagnetSuccessMessageCode:     MagnetSuccessMessageZH,
+
+		// Download
+		DownloadStartMessageCode:      DownloadStartMesssageZH,
+		DownloadProcessingMessageCode: DownloadProcessingMessageZH,
+		DownloadSuccessMessageCode:    DownloadSuccessMessageZH,
+		DownloadFailedMessageCode:     DownloadFailedMessageZH,
 	}
 	EN_MAP = map[string]string{
 		// Command
@@ -36,6 +42,12 @@ func init() {
 		MagnetProcessingMessageCode:  MagnetProcessingMessageEN,
 		MagnetErrorMessageCode:       MagnetErrorMessageEN,
 		MagnetSuccessMessageCode:     MagnetSuccessMessageEN,
+
+		// Download
+		DownloadStartMessageCode:      DownloadStartMesssageEN,
+		DownloadProcessingMessageCode: DownloadProcessingMessageEN,
+		DownloadSuccessMessageCode:    DownloadSuccessMessageEN,
+		DownloadFailedMessageCode:     DownloadFailedMessageEN,
 	}
 }
 

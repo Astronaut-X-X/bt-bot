@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"bt-bot/database"
 	"bt-bot/database/model"
@@ -111,4 +113,90 @@ func CreateUser(userID int64) (*model.User, *model.Permissions, error) {
 		return nil, nil, err
 	}
 	return &user, &permissions, nil
+}
+
+// 减少用户可下载文件数
+func DecrementDownloadCount(premium string) (bool, error) {
+	permissions, err := GetPermissions(premium)
+	if err != nil {
+		return false, err
+	}
+
+	if permissions.AsyncDownloadRemain <= 0 {
+		return false, errors.New("下载数量不足")
+	}
+
+	permissions.AsyncDownloadRemain = permissions.AsyncDownloadRemain - 1
+	if err = SetPermissions(premium, permissions); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+// 下载完成后恢复可下载文件数
+func IncrementDownloadCount(premium string) error {
+	permissions, err := GetPermissions(premium)
+	if err != nil {
+		return err
+	}
+
+	asyncDownloadQuantity := permissions.AsyncDownloadQuantity + 1
+	if asyncDownloadQuantity > permissions.AsyncDownloadQuantity {
+		asyncDownloadQuantity = permissions.AsyncDownloadQuantity
+	}
+
+	permissions.AsyncDownloadQuantity = asyncDownloadQuantity
+	if err = SetPermissions(premium, permissions); err != nil {
+		return err
+	}
+	return nil
+}
+
+func RemainDailyDownload(premium string) (bool, error) {
+	permissions, err := GetPermissions(premium)
+	if err != nil {
+		return false, err
+	}
+
+	date := time.Unix(permissions.DailyDownloadDate, 0)
+	if !date.Equal(time.Now().Truncate(24 * time.Hour)) {
+		permissions.DailyDownloadRemain = permissions.DailyDownloadQuantity
+		permissions.DailyDownloadDate = time.Now().Truncate(24 * time.Hour).Unix()
+		if err = SetPermissions(premium, permissions); err != nil {
+			return false, err
+		}
+	}
+
+	if permissions.DailyDownloadRemain <= 0 {
+		return false, nil
+	}
+	return true, nil
+}
+
+func DecrementDailyDownloadQuantity(premium string) error {
+	permissions, err := GetPermissions(premium)
+	if err != nil {
+		return err
+	}
+
+	permissions.DailyDownloadRemain = permissions.DailyDownloadRemain - 1
+	if permissions.DailyDownloadRemain <= 0 {
+		permissions.DailyDownloadRemain = 0
+	}
+
+	if err = SetPermissions(premium, permissions); err != nil {
+		return err
+	}
+	return nil
+}
+
+var (
+	SetPermissionsLock sync.Mutex
+)
+
+func SetPermissions(premium string, permissions *model.Permissions) error {
+	SetPermissionsLock.Lock()
+	defer SetPermissionsLock.Unlock()
+	return database.DB.Save(permissions).Error
 }

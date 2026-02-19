@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"sync"
 	"time"
 
@@ -11,13 +12,25 @@ import (
 )
 
 var (
+	downloadDir string = "downloads"
+
 	globalClientMutex sync.Mutex
 	globalClient      *torrent.Client
+
+	downloadCancelMap map[string]context.CancelFunc
 )
+
+func init() {
+	downloadCancelMap = make(map[string]context.CancelFunc)
+
+	if err := os.MkdirAll(downloadDir, 0755); err != nil {
+		log.Println("创建下载目录失败: ", err)
+	}
+}
 
 func InitTorrentClient(debug bool) error {
 	cfg := torrent.NewDefaultClientConfig()
-	cfg.DataDir = ""
+	cfg.DataDir = downloadDir
 	cfg.Debug = debug
 
 	client, err := torrent.NewClient(cfg)
