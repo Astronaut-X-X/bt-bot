@@ -41,9 +41,37 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	processingMsg := tgbotapi.NewMessage(chatID, processingMessage)
 	sentMsg, _ := bot.Send(processingMsg)
 
+	info, err := parseMagnetLink(magnetLink)
+	if err != nil {
+		errorMessage := i18n.Text(i18n.MagnetErrorMessageCode, user.Language)
+		errorMessage = i18n.Replace(errorMessage, map[string]string{
+			i18n.MagnetMessagePlaceholderErrorMessage: err.Error(),
+		})
+		editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, errorMessage)
+		bot.Send(editMsg)
+		return
+	}
+
+	successMessage := i18n.Text(i18n.MagnetSuccessMessageCode, user.Language)
+	successMessage = i18n.Replace(successMessage, map[string]string{
+		i18n.MagnetMessagePlaceholderMagnetLink: magnetLink,
+		i18n.MagnetMessagePlaceholderFileName:   info.Name,
+		i18n.MagnetMessagePlaceholderFileSize:   utils.FormatBytesToSizeString(info.Length),
+		i18n.MagnetMessagePlaceholderFileCount:  strconv.Itoa(len(info.Files)),
+		i18n.MagnetMessagePlaceholderFileList:   strings.Join(fileList(info.Files), "\n"),
+	})
+
+	editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, successMessage)
+
+	bot.Send(editMsg)
+}
+
+// parse magnet link to info
+func parseMagnetLink(magnetLink string) (*model.Torrent, error) {
 	var info_ model.Torrent
 
 	infoHash := torrent.ExtractTorrentInfoHash(magnetLink)
+
 	dbInfo, err := common.GetTorrentInfo(infoHash)
 	if err != nil {
 		log.Println("common.GetTorrentInfo err: ", err)
@@ -54,13 +82,7 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 		// 提取 InfoHash
 		info, err := torrent.ParseMagnetLink(magnetLink)
 		if err != nil {
-			errorMessage := i18n.Text(i18n.MagnetErrorMessageCode, user.Language)
-			errorMessage = i18n.Replace(errorMessage, map[string]string{
-				i18n.MagnetMessagePlaceholderErrorMessage: err.Error(),
-			})
-			editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, errorMessage)
-			bot.Send(editMsg)
-			return
+			return nil, err
 		}
 
 		parseInfo := info.Info()
@@ -89,8 +111,12 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 		}
 	}
 
+	return &info_, nil
+}
+
+func fileList(files []model.TorrentFile) []string {
 	fileList := make([]string, 0)
-	for index, file := range info_.Files {
+	for index, file := range files {
 		path := file.Path
 		if len(file.PathUtf8) > 0 {
 			path = file.PathUtf8
@@ -98,24 +124,7 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 		fileLine := fmt.Sprintf("• %d.%s (%s)", index+1, path, utils.FormatBytesToSizeString(file.Length))
 		fileList = append(fileList, fileLine)
 	}
-
-	successMessage := i18n.Text(i18n.MagnetSuccessMessageCode, user.Language)
-	successMessage = i18n.Replace(successMessage, map[string]string{
-		i18n.MagnetMessagePlaceholderMagnetLink: magnetLink,
-		i18n.MagnetMessagePlaceholderFileName:   info_.Name,
-		i18n.MagnetMessagePlaceholderFileSize:   utils.FormatBytesToSizeString(info_.TotalLength()),
-		i18n.MagnetMessagePlaceholderFileCount:  strconv.Itoa(len(info_.Files)),
-		i18n.MagnetMessagePlaceholderFileList:   strings.Join(fileList, "\n"),
-	})
-
-	editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, successMessage)
-
-	// 如果有文件，添加文件按钮
-	if len(info_.Files) > 0 {
-		editMsg.ReplyMarkup = createFileButtons(info_.Files, infoHash)
-	}
-
-	bot.Send(editMsg)
+	return fileList
 }
 
 // createFileButtons 创建文件按钮
