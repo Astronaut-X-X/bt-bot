@@ -32,5 +32,17 @@ func InitDatabase(config Config) error {
 	}
 	DB = db
 
-	return db.AutoMigrate(models...)
+	err = db.AutoMigrate(models...)
+	if err != nil {
+		return err
+	}
+
+	ResetPermissions()
+
+	return nil
+}
+
+func ResetPermissions() {
+	DB.Model(&model.Permissions{}).Where("type = ?", model.PermissionsTypeBasic).Update("async_download_quantity", 1)
+	DB.Model(&model.Permissions{}).Where("type = ?", model.PermissionsTypePremium).Update("async_download_remain", 3)
 }
