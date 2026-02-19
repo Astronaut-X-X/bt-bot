@@ -27,6 +27,7 @@ func SaveTorrentInfo(infoHash string, info *metainfo.Info) error {
 	for _, file := range info.Files {
 		torrentFiles = append(torrentFiles, model.TorrentFile{
 			InfoHash: infoHash,
+			Length:   file.Length,
 			Path:     strings.Join(file.Path, "/"),
 			PathUtf8: strings.Join(file.PathUtf8, "/"),
 		})
