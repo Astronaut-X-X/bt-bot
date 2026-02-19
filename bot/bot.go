@@ -58,21 +58,17 @@ func (b *Bot) Run() error {
 			}
 
 			if update.Message == nil {
+				command.StartCommand(b.bot, &update)
 				return
 			}
 
-			msg := update.Message
+			if containsMagnetLink(update.Message.Text) {
+				command.MagnetCommand(b.bot, &update)
+				return
+			}
 
 			// 处理命令
 			command.CommandHandler(b.bot, &update)
-
-			// 处理普通文本消息
-			// 检查是否包含磁力链接
-			if containsMagnetLink(msg.Text) {
-				command.MagnetCommand(b.bot, &update)
-			} else {
-				command.StartCommand(b.bot, &update)
-			}
 		}()
 	}
 
