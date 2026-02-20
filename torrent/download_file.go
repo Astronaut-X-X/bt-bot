@@ -204,5 +204,7 @@ func CancelDownload(magnetLink string, fileIndex int) {
 	downloadCancel, ok := downloadCancelMap[fmt.Sprintf("%s-%d", magnetLink, fileIndex)]
 	if ok {
 		downloadCancel()
+		delete(downloadCancelMap, fmt.Sprintf("%s-%d", magnetLink, fileIndex))
+		log.Println("cancel download", magnetLink, fileIndex)
 	}
 }

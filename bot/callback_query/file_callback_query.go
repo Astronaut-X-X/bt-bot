@@ -79,7 +79,9 @@ func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	startMessage = i18n.Replace(startMessage, map[string]string{
 		i18n.DownloadMessagePlaceholderMagnet: infoHash,
 	})
-	message, err := bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, startMessage))
+	newMessage := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, startMessage)
+	newMessage.ReplyMarkup = stopDownloadReplyMarkup(infoHash, fileIndex, user.Language)
+	message, err := bot.Send(newMessage)
 	if err != nil {
 		log.Println("send start message error", err)
 		return
@@ -102,7 +104,9 @@ func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 				i18n.DownloadMessagePlaceholderBytesCompleted: utils.FormatBytesToSizeString(bytesCompleted),
 				i18n.DownloadMessagePlaceholderTotalBytes:     utils.FormatBytesToSizeString(totalBytes),
 			})
-			bot.Send(tgbotapi.NewEditMessageText(chatID, messageID, downloadProcessingMessage))
+			newEditMessage := tgbotapi.NewEditMessageText(chatID, messageID, downloadProcessingMessage)
+			newEditMessage.ReplyMarkup = stopDownloadReplyMarkup(infoHash, fileIndex, user.Language)
+			bot.Send(newEditMessage)
 		},
 		func() {
 			downloadFailedMessage := i18n.Text(i18n.DownloadFailedMessageCode, user.Language)
@@ -110,7 +114,8 @@ func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 				i18n.DownloadMessagePlaceholderMagnet:       infoHash,
 				i18n.DownloadMessagePlaceholderErrorMessage: "Cancel",
 			})
-			bot.Send(tgbotapi.NewEditMessageText(chatID, messageID, downloadFailedMessage))
+			newEditMessage := tgbotapi.NewEditMessageText(chatID, messageID, downloadFailedMessage)
+			bot.Send(newEditMessage)
 		},
 		func() {
 			downloadFailedMessage := i18n.Text(i18n.DownloadFailedMessageCode, user.Language)
@@ -118,7 +123,8 @@ func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 				i18n.DownloadMessagePlaceholderMagnet:       infoHash,
 				i18n.DownloadMessagePlaceholderErrorMessage: "Timeout",
 			})
-			bot.Send(tgbotapi.NewEditMessageText(chatID, messageID, downloadFailedMessage))
+			newEditMessage := tgbotapi.NewEditMessageText(chatID, messageID, downloadFailedMessage)
+			bot.Send(newEditMessage)
 		},
 		func() {
 			downloadSuccessMessage := i18n.Text(i18n.DownloadSuccessMessageCode, user.Language)
@@ -142,4 +148,14 @@ func parseFileCallbackQueryData(data string) (string, int, error) {
 		return "", 0, err
 	}
 	return infoHash, fileIndex, nil
+}
+
+func stopDownloadReplyMarkup(infoHash string, fileIndex int, language string) *tgbotapi.InlineKeyboardMarkup {
+	data := "stop_download_" + infoHash + "_" + strconv.Itoa(fileIndex)
+
+	return &tgbotapi.InlineKeyboardMarkup{
+		InlineKeyboard: [][]tgbotapi.InlineKeyboardButton{
+			{tgbotapi.NewInlineKeyboardButtonData(i18n.Text(i18n.ButtonStopDownloadCode, language), data)},
+		},
+	}
 }

@@ -30,6 +30,9 @@ func init() {
 		DownloadProcessingMessageCode: DownloadProcessingMessageZH,
 		DownloadSuccessMessageCode:    DownloadSuccessMessageZH,
 		DownloadFailedMessageCode:     DownloadFailedMessageZH,
+
+		// Button
+		ButtonStopDownloadCode: ButtonStopDownloadZH,
 	}
 	EN_MAP = map[string]string{
 		// Command
@@ -48,6 +51,9 @@ func init() {
 		DownloadProcessingMessageCode: DownloadProcessingMessageEN,
 		DownloadSuccessMessageCode:    DownloadSuccessMessageEN,
 		DownloadFailedMessageCode:     DownloadFailedMessageEN,
+
+		// Button
+		ButtonStopDownloadCode: ButtonStopDownloadEN,
 	}
 }
 
