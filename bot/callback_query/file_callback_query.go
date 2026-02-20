@@ -108,29 +108,32 @@ func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 			newEditMessage.ReplyMarkup = stopDownloadReplyMarkup(infoHash, fileIndex, user.Language)
 			bot.Send(newEditMessage)
 		},
-		func() {
+		func(fileName string) {
 			downloadFailedMessage := i18n.Text(i18n.DownloadFailedMessageCode, user.Language)
 			downloadFailedMessage = i18n.Replace(downloadFailedMessage, map[string]string{
-				i18n.DownloadMessagePlaceholderMagnet:       infoHash,
-				i18n.DownloadMessagePlaceholderErrorMessage: "Cancel",
+				i18n.DownloadMessagePlaceholderMagnet:        infoHash,
+				i18n.DownloadMessagePlaceholderErrorMessage:  "Cancel",
+				i18n.DownloadMessagePlaceholderDownloadFiles: fileName,
 			})
 			newEditMessage := tgbotapi.NewEditMessageText(chatID, messageID, downloadFailedMessage)
 			bot.Send(newEditMessage)
 		},
-		func() {
+		func(fileName string) {
 			downloadFailedMessage := i18n.Text(i18n.DownloadFailedMessageCode, user.Language)
 			downloadFailedMessage = i18n.Replace(downloadFailedMessage, map[string]string{
-				i18n.DownloadMessagePlaceholderMagnet:       infoHash,
-				i18n.DownloadMessagePlaceholderErrorMessage: "Timeout",
+				i18n.DownloadMessagePlaceholderMagnet:        infoHash,
+				i18n.DownloadMessagePlaceholderErrorMessage:  "Timeout",
+				i18n.DownloadMessagePlaceholderDownloadFiles: fileName,
 			})
 			newEditMessage := tgbotapi.NewEditMessageText(chatID, messageID, downloadFailedMessage)
 			bot.Send(newEditMessage)
 		},
-		func() {
+		func(fileName string) {
 			downloadSuccessMessage := i18n.Text(i18n.DownloadSuccessMessageCode, user.Language)
 			downloadSuccessMessage = i18n.Replace(downloadSuccessMessage, map[string]string{
-				i18n.DownloadMessagePlaceholderMagnet:        infoHash,
-				i18n.DownloadMessagePlaceholderDownloadFiles: "TODO",
+				i18n.DownloadMessagePlaceholderMagnet:          infoHash,
+				i18n.DownloadMessagePlaceholderDownloadFiles:   fileName,
+				i18n.DownloadMessagePlaceholderDownloadChannel: "@tgqpXOZ2tzXN",
 			})
 			bot.Send(tgbotapi.NewEditMessageText(chatID, messageID, downloadSuccessMessage))
 		},

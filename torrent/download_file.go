@@ -19,9 +19,9 @@ func Download(
 	magnetLink string,
 	fileIndex int,
 	callback func(bytesCompleted, totalBytes int64, fileName string),
-	cancelCallback func(),
-	timeoutCallback func(),
-	successCallback func(),
+	cancelCallback func(fileName string),
+	timeoutCallback func(fileName string),
+	successCallback func(fileName string),
 ) ([]string, error) {
 	log.Println("download", magnetLink, fileIndex)
 	if fileIndex == -1 {
@@ -35,9 +35,9 @@ func Download(
 func DownloadAllFile(
 	magnetLink string,
 	callback func(bytesCompleted, totalBytes int64, fileName string),
-	cancelCallback func(),
-	timeoutCallback func(),
-	successCallback func(),
+	cancelCallback func(fileName string),
+	timeoutCallback func(fileName string),
+	successCallback func(fileName string),
 ) ([]string, error) {
 	log.Println("download all file", magnetLink)
 
@@ -94,10 +94,10 @@ func DownloadAllFile(
 		case <-downloadCtx.Done():
 			// 判断被取消还是超时
 			if downloadCtx.Err() == context.Canceled {
-				cancelCallback()
+				cancelCallback("All files")
 				log.Println("download all file canceled")
 			} else {
-				timeoutCallback()
+				timeoutCallback("All files")
 				log.Println("download all file timeout")
 			}
 			return nil, nil
@@ -107,7 +107,7 @@ func DownloadAllFile(
 			if bytesCompleted >= totalLength {
 				// 下载完成
 				log.Printf("✅ 文件下载完成: %s (已下载: %d 字节)", t.Info().Name, bytesCompleted)
-				successCallback()
+				successCallback("All files")
 				return nil, nil
 			}
 			// 调用进度回调
@@ -122,9 +122,9 @@ func DownloadFile(
 	magnetLink string,
 	fileIndex int,
 	callback func(bytesCompleted, totalBytes int64, fileName string),
-	cancelCallback func(),
-	timeoutCallback func(),
-	successCallback func(),
+	cancelCallback func(fileName string),
+	timeoutCallback func(fileName string),
+	successCallback func(fileName string),
 ) ([]string, error) {
 	log.Printf("⏱️ 开始下载文件: %s (文件索引: %d)", magnetLink, fileIndex)
 
@@ -182,10 +182,10 @@ func DownloadFile(
 			// 判断是否是被外部取消
 			if downloadCtx.Err() == context.Canceled {
 				log.Println("download file canceled")
-				cancelCallback()
+				cancelCallback(targetFile.DisplayPath())
 			} else {
 				log.Println("download file timeout")
-				timeoutCallback()
+				timeoutCallback(targetFile.DisplayPath())
 			}
 			return nil, nil
 		default:
@@ -193,7 +193,7 @@ func DownloadFile(
 			bytesCompleted := targetFile.BytesCompleted()
 			if bytesCompleted >= totalLength {
 				log.Printf("✅ 文件下载完成: %s (已下载: %d 字节)", t.Info().Name, bytesCompleted)
-				successCallback()
+				successCallback(targetFile.DisplayPath())
 				return nil, nil
 			}
 			// 定时触发进度回调

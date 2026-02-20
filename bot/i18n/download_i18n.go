@@ -6,12 +6,13 @@ const (
 	DownloadSuccessMessageCode    = "download_success_message"
 	DownloadFailedMessageCode     = "download_failed_message"
 
-	DownloadMessagePlaceholderMagnet         = "{magnet}"
-	DownloadMessagePlaceholderErrorMessage   = "{error_message}"
-	DownloadMessagePlaceholderDownloadFiles  = "{download_files}"
-	DownloadMessagePlaceholderPercent        = "{percent}"
-	DownloadMessagePlaceholderBytesCompleted = "{bytes_completed}"
-	DownloadMessagePlaceholderTotalBytes     = "{total_bytes}"
+	DownloadMessagePlaceholderMagnet          = "{magnet}"
+	DownloadMessagePlaceholderErrorMessage    = "{error_message}"
+	DownloadMessagePlaceholderDownloadFiles   = "{download_files}"
+	DownloadMessagePlaceholderPercent         = "{percent}"
+	DownloadMessagePlaceholderBytesCompleted  = "{bytes_completed}"
+	DownloadMessagePlaceholderTotalBytes      = "{total_bytes}"
+	DownloadMessagePlaceholderDownloadChannel = "{download_channel}"
 )
 
 const (
