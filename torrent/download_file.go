@@ -83,6 +83,7 @@ func DownloadAllFile(
 
 	// 清理资源
 	defer func() {
+		t.Drop()
 		downloadCancel()
 		baseCancel()
 		delete(downloadCancelMap, magnetLink)
@@ -129,7 +130,7 @@ func DownloadFile(
 	log.Printf("⏱️ 开始下载文件: %s (文件索引: %d)", magnetLink, fileIndex)
 
 	// 解析磁力链接，获取 Torrent 句柄
-	t, err := ParseMagnetLink(magnetLink)
+	t, err := ParseMagnetLink("magnet:?xt=urn:btih:" + magnetLink)
 	if err != nil {
 		return nil, err
 	}
@@ -170,6 +171,7 @@ func DownloadFile(
 
 	// 清理函数
 	defer func() {
+		t.Drop()
 		downloadCancel()
 		baseCancel()
 		delete(downloadCancelMap, magnetLink)
