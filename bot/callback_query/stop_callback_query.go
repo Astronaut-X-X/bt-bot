@@ -25,11 +25,11 @@ func StopCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 
 func parseStopCallbackQueryData(data string) (string, int, error) {
 	split := strings.Split(data, "_")
-	if split[0] != "stop_download" {
+	if split[0]+"_"+split[1] != "stop_download" {
 		return "", 0, errors.New("invalid data")
 	}
-	infoHash := split[1]
-	fileIndex, err := strconv.Atoi(split[2])
+	infoHash := split[2]
+	fileIndex, err := strconv.Atoi(split[3])
 	if err != nil {
 		return "", 0, err
 	}
