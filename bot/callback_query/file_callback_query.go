@@ -87,6 +87,8 @@ func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	chatID := message.Chat.ID
 	messageID := message.MessageID
 
+	log.Println("download file", infoHash, fileIndex)
+
 	torrent.Download(
 		infoHash,
 		fileIndex,
