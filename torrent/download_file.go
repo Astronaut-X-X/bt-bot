@@ -42,10 +42,13 @@ func DownloadAllFile(
 	log.Println("download all file", magnetLink)
 
 	// 解析磁力链接，获取 Torrent 句柄
-	t, err := ParseMagnetLink(magnetLink)
+	t, err := ParseMagnetLink("magnet:?xt=urn:btih:" + magnetLink)
 	if err != nil {
+		log.Println("parse magnet link error", err)
 		return nil, err
 	}
+
+	log.Println("parse magnet link success", t.Info().Name)
 
 	// 计算总大小
 	totalLength := t.Info().TotalLength()
