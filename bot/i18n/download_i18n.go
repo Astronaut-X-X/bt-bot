@@ -35,7 +35,7 @@ const (
 
 🔗 Magent: {magnet}
 💾 正在下载文件：
-[{percent}%({bytes_completed}/{total_bytes})] {download_files}
+[{percent}({bytes_completed}/{total_bytes})] {download_files}
 `
 
 	DownloadProcessingMessageEN = `
@@ -43,7 +43,7 @@ const (
 
 🔗 Magnet: {magnet}
 💾 Downloading:
-[{percent}%({bytes_completed}/{total_bytes})] {download_files}
+[{percent}({bytes_completed}/{total_bytes})] {download_files}
 `
 )
 

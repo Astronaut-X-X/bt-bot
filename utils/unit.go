@@ -3,6 +3,9 @@ package utils
 import "fmt"
 
 func FormatPercentage(completed, total int64) string {
+	if completed == 0 || total == 0 {
+		return "0.00%"
+	}
 	return fmt.Sprintf("%.2f%%", float64(completed)*100/float64(total))
 }
 
