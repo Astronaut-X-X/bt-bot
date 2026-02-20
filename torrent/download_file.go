@@ -23,10 +23,12 @@ func Download(
 	timeoutCallback func(),
 	successCallback func(),
 ) ([]string, error) {
+	log.Println("download", magnetLink, fileIndex)
 	if fileIndex == -1 {
 		return DownloadAllFile(magnetLink, callback, cancelCallback, timeoutCallback, successCallback)
+	} else {
+		return DownloadFile(magnetLink, fileIndex, callback, cancelCallback, timeoutCallback, successCallback)
 	}
-	return DownloadFile(magnetLink, fileIndex, callback, cancelCallback, timeoutCallback, successCallback)
 }
 
 // DownloadAllFile 下载种子中的所有文件
@@ -37,6 +39,8 @@ func DownloadAllFile(
 	timeoutCallback func(),
 	successCallback func(),
 ) ([]string, error) {
+	log.Println("download all file", magnetLink)
+
 	// 解析磁力链接，获取 Torrent 句柄
 	t, err := ParseMagnetLink(magnetLink)
 	if err != nil {
@@ -51,6 +55,8 @@ func DownloadAllFile(
 		t.Files()[i].SetPriority(torrent.PiecePriorityNormal)
 	}
 	t.DownloadAll()
+
+	log.Println("download all file", totalLength)
 
 	// 估算下载所需时间（100KB/s），最低2小时，加30分钟缓冲，最长不超6小时
 	minSpeed := int64(100 * 1024) // 100KB/s
@@ -86,9 +92,12 @@ func DownloadAllFile(
 			// 判断被取消还是超时
 			if downloadCtx.Err() == context.Canceled {
 				cancelCallback()
+				log.Println("download all file canceled")
+			} else {
+				timeoutCallback()
+				log.Println("download all file timeout")
 			}
-			timeoutCallback()
-			// 跳出循环（理论只能通过 return 或 panic 结束）
+			return nil, nil
 		default:
 			// 查询下载进度
 			bytesCompleted := t.BytesCompleted()
