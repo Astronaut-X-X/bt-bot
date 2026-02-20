@@ -4,6 +4,7 @@ import (
 	"bt-bot/bot/common"
 	"bt-bot/bot/i18n"
 	"bt-bot/torrent"
+	"bt-bot/utils"
 	"errors"
 	"log"
 	"strconv"
@@ -97,9 +98,9 @@ func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 			downloadProcessingMessage = i18n.Replace(downloadProcessingMessage, map[string]string{
 				i18n.DownloadMessagePlaceholderMagnet:         infoHash,
 				i18n.DownloadMessagePlaceholderDownloadFiles:  fileName,
-				i18n.DownloadMessagePlaceholderPercent:        strconv.Itoa(int(bytesCompleted * 100 / totalBytes)),
-				i18n.DownloadMessagePlaceholderBytesCompleted: strconv.Itoa(int(bytesCompleted)),
-				i18n.DownloadMessagePlaceholderTotalBytes:     strconv.Itoa(int(totalBytes)),
+				i18n.DownloadMessagePlaceholderPercent:        utils.FormatPercentage(bytesCompleted, totalBytes),
+				i18n.DownloadMessagePlaceholderBytesCompleted: utils.FormatBytesToSizeString(bytesCompleted),
+				i18n.DownloadMessagePlaceholderTotalBytes:     utils.FormatBytesToSizeString(totalBytes),
 			})
 			bot.Send(tgbotapi.NewEditMessageText(chatID, messageID, downloadProcessingMessage))
 		},

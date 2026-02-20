@@ -17,11 +17,13 @@ const (
 const (
 	DownloadStartMesssageZH = `
 ⌛ 准备开始下载文件...
+
 🔗 磁力链接: {magnet}
 `
 
 	DownloadStartMesssageEN = `
 ⌛ Preparing to download file...
+
 🔗 Magnet: {magnet}
 `
 )
@@ -30,6 +32,7 @@ const (
 const (
 	DownloadProcessingMessageZH = `
 ⌛ 文件下载中...
+
 🔗 Magent: {magnet}
 💾 正在下载文件：
 [{percent}%({bytes_completed}/{total_bytes})] {download_files}
@@ -37,6 +40,7 @@ const (
 
 	DownloadProcessingMessageEN = `
 ⌛ Downloading file...
+
 🔗 Magnet: {magnet}
 💾 Downloading:
 [{percent}%({bytes_completed}/{total_bytes})] {download_files}
@@ -47,6 +51,7 @@ const (
 const (
 	DownloadSuccessMessageZH = `
 ✅ 文件下载成功
+
 🔗 磁力链接: {magnet}
 💾 文件列表：
 {download_files}
@@ -56,6 +61,7 @@ const (
 
 	DownloadSuccessMessageEN = `
 ✅ Download complete
+
 🔗 Magnet: {magnet}
 💾 File list:
 {download_files}
@@ -68,7 +74,8 @@ Go to channel: {download_channel}
 const (
 	DownloadFailedMessageZH = `
 ❎ 下载失败
-ℹ 错误信息: {error_message}
+
+⚠️ 错误信息: {error_message}
 🔗 磁力链接: {magnet}
 💾 下载文件：
 {download_files}
@@ -77,7 +84,8 @@ const (
 
 	DownloadFailedMessageEN = `
 ❎ Download failed
-ℹ Error: {error_message}
+
+⚠️ Error: {error_message}
 🔗 Magnet: {magnet}
 💾 Download file:
 {download_files}
