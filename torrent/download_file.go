@@ -79,7 +79,7 @@ func DownloadAllFile(
 	baseCtx, baseCancel := context.WithTimeout(context.Background(), estimatedTime)
 	downloadCtx, downloadCancel := context.WithCancel(baseCtx)
 	// 保存 cancel 函数到全局 map，用于外部取消
-	downloadCancelMap[magnetLink] = downloadCancel
+	downloadCancelMap[fmt.Sprintf("%s-%d", magnetLink, -1)] = downloadCancel
 
 	// 清理资源
 	defer func() {
@@ -181,10 +181,13 @@ func DownloadFile(
 		case <-downloadCtx.Done():
 			// 判断是否是被外部取消
 			if downloadCtx.Err() == context.Canceled {
+				log.Println("download file canceled")
 				cancelCallback()
+			} else {
+				log.Println("download file timeout")
+				timeoutCallback()
 			}
-			timeoutCallback()
-			// 跳出循环（理论只能通过 return 或 panic 结束）
+			return nil, nil
 		default:
 			// 实时获取目标文件的下载进度
 			bytesCompleted := targetFile.BytesCompleted()
