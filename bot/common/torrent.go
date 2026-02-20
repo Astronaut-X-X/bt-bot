@@ -34,6 +34,13 @@ func SaveTorrentInfo(infoHash string, info *metainfo.Info) (*model.Torrent, erro
 		})
 	}
 
+	if len(torrentFiles) == 0 {
+		return &model.Torrent{
+			TorrentInfo: *torrentInfo,
+			Files:       torrentFiles,
+		}, nil
+	}
+
 	if err := database.DB.Save(torrentFiles).Error; err != nil {
 		return &model.Torrent{
 			TorrentInfo: *torrentInfo,
