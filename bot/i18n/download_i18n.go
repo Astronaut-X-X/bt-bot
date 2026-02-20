@@ -73,7 +73,7 @@ Go to channel: {download_channel}
 // 文件下载失败（模板含：并发数限制/超时错误/取消下载）
 const (
 	DownloadFailedMessageZH = `
-❎ 下载失败
+❌ 下载失败
 
 ⚠️ 错误信息: {error_message}
 🔗 磁力链接: {magnet}
@@ -83,7 +83,7 @@ const (
 `
 
 	DownloadFailedMessageEN = `
-❎ Download failed
+❌ Download failed
 
 ⚠️ Error: {error_message}
 🔗 Magnet: {magnet}
