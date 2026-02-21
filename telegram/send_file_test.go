@@ -14,7 +14,7 @@ func TestSendFile(t *testing.T) {
 		return
 	}
 
-	err := SendCommentMessage("movie.mp4", 20)
+	err := SendCommentMessage("45ddbbb4-27e7-4b0c-8bcb-f8245133ed69.jpeg", 20)
 	if err != nil {
 		log.Println("failed to send comment message:", err)
 		return

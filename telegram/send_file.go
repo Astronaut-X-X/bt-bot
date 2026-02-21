@@ -180,62 +180,44 @@ func SendCommentMessage(path string, msgId int) error {
 
 	filename := filepath.Base(path)
 	ext := filepath.Ext(path)
-	replyTo := &tg.InputReplyToMessage{
-		TopMsgID:     msgId,
-		ReplyToMsgID: msgId,
+	sendMsg := &tg.MessagesSendMediaRequest{
+		Peer:     commonetInputPeerChannel,
+		RandomID: rand.Int64(),
+		ReplyTo: &tg.InputReplyToMessage{
+			TopMsgID:     msgId,
+			ReplyToMsgID: msgId,
+		},
 	}
 
 	switch ext {
 	case ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".webp":
-		sendMsg := &tg.MessagesSendMediaRequest{
-			Peer:     commonetInputPeerChannel,
-			RandomID: rand.Int64(),
-			Media: &tg.InputMediaUploadedDocument{
-				Attributes: []tg.DocumentAttributeClass{
-					&tg.DocumentAttributeFilename{FileName: filename},
-				},
-				MimeType: GetMimeType(ext),
-				File:     inputFile,
+		sendMsg.Media = &tg.InputMediaUploadedDocument{
+			Attributes: []tg.DocumentAttributeClass{
+				&tg.DocumentAttributeFilename{FileName: filename},
+				&tg.DocumentAttributeImageSize{},
 			},
-			ReplyTo: replyTo,
-		}
-		if _, err = client.API().MessagesSendMedia(context.TODO(), sendMsg); err != nil {
-			log.Println("failed to send message:", err)
-			return err
+			File: inputFile,
 		}
 	case ".mp4", ".mov", ".mkv", ".webm", ".avi":
-		sendMsg := &tg.MessagesSendMediaRequest{
-			Peer:     commonetInputPeerChannel,
-			RandomID: rand.Int64(),
-			Media: &tg.InputMediaUploadedDocument{
-				Attributes: []tg.DocumentAttributeClass{
-					&tg.DocumentAttributeFilename{FileName: filename},
-					&tg.DocumentAttributeVideo{},
-				},
-				MimeType: GetMimeType(ext),
-				File:     inputFile,
+		sendMsg.Media = &tg.InputMediaUploadedDocument{
+			Attributes: []tg.DocumentAttributeClass{
+				&tg.DocumentAttributeFilename{FileName: filename},
+				&tg.DocumentAttributeVideo{},
 			},
-			ReplyTo: replyTo,
-		}
-		if _, err = client.API().MessagesSendMedia(context.TODO(), sendMsg); err != nil {
-			log.Println("failed to send message:", err)
-			return err
+			File: inputFile,
 		}
 	default:
-		sendMsg := &tg.MessagesSendMediaRequest{
-			Peer:     commonetInputPeerChannel,
-			RandomID: rand.Int64(),
-			Media: &tg.InputMediaUploadedDocument{
-				Attributes: []tg.DocumentAttributeClass{&tg.DocumentAttributeFilename{FileName: filename}},
-				MimeType:   GetMimeType(ext),
-				File:       inputFile,
+		sendMsg.Media = &tg.InputMediaUploadedDocument{
+			Attributes: []tg.DocumentAttributeClass{
+				&tg.DocumentAttributeFilename{FileName: filename},
 			},
-			ReplyTo: replyTo,
+			File: inputFile,
 		}
-		if _, err = client.API().MessagesSendMedia(context.TODO(), sendMsg); err != nil {
-			log.Println("failed to send message:", err)
-			return err
-		}
+	}
+
+	if _, err = client.API().MessagesSendMedia(context.TODO(), sendMsg); err != nil {
+		log.Println("failed to send message:", err)
+		return err
 	}
 
 	return nil
