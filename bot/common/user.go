@@ -141,12 +141,7 @@ func IncrementDownloadCount(premium string) error {
 		return err
 	}
 
-	asyncDownloadQuantity := permissions.AsyncDownloadQuantity + 1
-	if asyncDownloadQuantity > permissions.AsyncDownloadQuantity {
-		asyncDownloadQuantity = permissions.AsyncDownloadQuantity
-	}
-
-	permissions.AsyncDownloadQuantity = asyncDownloadQuantity
+	permissions.AsyncDownloadRemain = min(permissions.AsyncDownloadRemain+1, permissions.AsyncDownloadQuantity)
 	if err = SetPermissions(premium, permissions); err != nil {
 		return err
 	}
@@ -180,11 +175,7 @@ func DecrementDailyDownloadQuantity(premium string) error {
 		return err
 	}
 
-	permissions.DailyDownloadRemain = permissions.DailyDownloadRemain - 1
-	if permissions.DailyDownloadRemain <= 0 {
-		permissions.DailyDownloadRemain = 0
-	}
-
+	permissions.DailyDownloadRemain = min(permissions.DailyDownloadRemain-1, 0)
 	if err = SetPermissions(premium, permissions); err != nil {
 		return err
 	}
