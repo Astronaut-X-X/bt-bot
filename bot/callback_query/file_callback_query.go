@@ -75,6 +75,9 @@ func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 		return
 	}
 
+	// 文件下载大小限制
+	// TODO
+
 	startMessage := i18n.Text(i18n.DownloadStartMessageCode, user.Language)
 	startMessage = i18n.Replace(startMessage, map[string]string{
 		i18n.DownloadMessagePlaceholderMagnet: infoHash,

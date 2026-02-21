@@ -6,6 +6,7 @@ import (
 
 	"github.com/gotd/contrib/bg"
 	"github.com/gotd/td/telegram"
+	"github.com/gotd/td/telegram/dcs"
 	"github.com/gotd/td/tg"
 )
 
@@ -61,6 +62,9 @@ func NewClient(uuid string) *Client {
 	client.client = telegram.NewClient(AppID, AppHash, telegram.Options{
 		SessionStorage: GetSessionStorage(uuid),
 		Middlewares:    []telegram.Middleware{invokeMiddleware},
+		Resolver: dcs.Plain(dcs.PlainOptions{
+			Dial: dialer,
+		}),
 	})
 
 	stop, err := bg.Connect(client.client)
