@@ -168,7 +168,7 @@ func createFileButtons(files []model.TorrentFile, infoHash string) *tgbotapi.Inl
 	if len(files) > maxButtons {
 		infoButton := tgbotapi.NewInlineKeyboardButtonData(
 			fmt.Sprintf("📋 后一页 >"),
-			fmt.Sprintf("info_more_%s_1", infoHash),
+			fmt.Sprintf("info_more_%s_2", infoHash),
 		)
 		buttons = append(buttons, []tgbotapi.InlineKeyboardButton{infoButton})
 	}
