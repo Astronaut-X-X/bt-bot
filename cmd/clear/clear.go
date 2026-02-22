@@ -12,8 +12,8 @@ func main() {
 		Debug: true,
 	})
 
-	database.DB.Model(&model.DownloadFileMessage{}).Where("message_id = ?", "*").Delete(&model.DownloadFileMessage{})
-	database.DB.Model(&model.DownloadFileComment{}).Where("file_index = ?", "*").Delete(&model.DownloadFileComment{})
+	database.DB.Model(&model.DownloadFileMessage{}).Where("1 = 1").Delete(&model.DownloadFileMessage{})
+	database.DB.Model(&model.DownloadFileComment{}).Where("1 = 1").Delete(&model.DownloadFileComment{})
 
 	fmt.Println("clear download file message and download file comment success")
 }
