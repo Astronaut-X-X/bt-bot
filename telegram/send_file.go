@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand/v2"
+	"mime"
 	"os"
 	"path/filepath"
 	"strings"
@@ -213,6 +214,10 @@ func SendCommentMessage(path string, msgId int) error {
 			ReplyToMsgID: msgId,
 		},
 	}
+	mimeType := mime.TypeByExtension(ext)
+	if mimeType == "" {
+		mimeType = "application/octet-stream"
+	}
 
 	switch ext {
 	case ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".webp":
@@ -221,7 +226,8 @@ func SendCommentMessage(path string, msgId int) error {
 				&tg.DocumentAttributeFilename{FileName: filename},
 				&tg.DocumentAttributeImageSize{},
 			},
-			File: inputFile,
+			File:     inputFile,
+			MimeType: mimeType,
 		}
 	case ".mp4", ".mov", ".mkv", ".webm", ".avi":
 		sendMsg.Media = &tg.InputMediaUploadedDocument{
@@ -229,14 +235,16 @@ func SendCommentMessage(path string, msgId int) error {
 				&tg.DocumentAttributeFilename{FileName: filename},
 				&tg.DocumentAttributeVideo{},
 			},
-			File: inputFile,
+			File:     inputFile,
+			MimeType: mimeType,
 		}
 	default:
 		sendMsg.Media = &tg.InputMediaUploadedDocument{
 			Attributes: []tg.DocumentAttributeClass{
 				&tg.DocumentAttributeFilename{FileName: filename},
 			},
-			File: inputFile,
+			File:     inputFile,
+			MimeType: mimeType,
 		}
 	}
 
