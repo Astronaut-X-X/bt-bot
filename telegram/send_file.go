@@ -3,6 +3,8 @@ package telegram
 import (
 	"context"
 	"errors"
+	"fmt"
+	"io"
 	"log"
 	"math/rand/v2"
 	"mime"
@@ -256,6 +258,32 @@ func SendCommentMessage(path string, msgId int) error {
 }
 
 func uploadFile(client *Client, path string) (tg.InputFileClass, error) {
+	// 读取文件，每次最多读取 5MB
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("open file failed: %w", err)
+	}
+	defer file.Close()
+
+	limitedReader := &LimitedReaderFile{
+		file:          *file,
+		limitedReader: io.LimitReader(file, 5*1024*1024),
+	}
+
+	// 上传文件
 	up := uploader.NewUploader(client.API())
-	return up.FromPath(context.TODO(), path)
+	return up.FromFile(context.TODO(), limitedReader)
+}
+
+type LimitedReaderFile struct {
+	file          os.File
+	limitedReader io.Reader
+}
+
+func (f *LimitedReaderFile) Read(p []byte) (n int, err error) {
+	return f.limitedReader.Read(p)
+}
+
+func (f *LimitedReaderFile) Stat() (os.FileInfo, error) {
+	return f.file.Stat()
 }
