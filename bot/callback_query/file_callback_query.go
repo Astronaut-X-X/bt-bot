@@ -84,7 +84,7 @@ func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 
 	// 下载进度
 	progressCallback := func(params torrent.ProgressParams) {
-		message := i18n.Text(i18n.DownloadFailedMessageCode, user.Language)
+		message := i18n.Text(i18n.DownloadProcessingMessageCode, user.Language)
 		message = i18n.Replace(message, map[string]string{
 			i18n.DownloadMessagePlaceholderMagnet:         infoHash,
 			i18n.DownloadMessagePlaceholderDownloadFiles:  params.FileName,
