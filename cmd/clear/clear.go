@@ -2,7 +2,6 @@ package main
 
 import (
 	"bt-bot/database"
-	"bt-bot/database/model"
 	"fmt"
 )
 
@@ -12,8 +11,8 @@ func main() {
 		Debug: true,
 	})
 
-	database.DB.Model(&model.DownloadFileMessage{}).Where("1 = 1").Delete(&model.DownloadFileMessage{})
-	database.DB.Model(&model.DownloadFileComment{}).Where("1 = 1").Delete(&model.DownloadFileComment{})
+	database.DB.Exec("TRUNCATE TABLE download_file_messages")
+	database.DB.Exec("TRUNCATE TABLE download_file_comments")
 
 	fmt.Println("clear download file message and download file comment success")
 }
