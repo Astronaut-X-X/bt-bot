@@ -55,13 +55,19 @@ func SendChannelMessage(text string) (int, error) {
 		}
 	}
 
+	log.Println("send message success", msgId)
+
 	sleepTime := 2 * time.Second
 	for {
 		time.Sleep(sleepTime)
 		msgId, err = getDiscussionMessageId(client, msgId, channelId, accessHash)
 		if err == nil {
+			log.Println("get discussion message id success", msgId)
 			return msgId, nil
 		}
+
+		log.Println("failed to get discussion message id:", err)
+
 		if !strings.Contains(err.Error(), "FLOOD_WAIT") {
 			log.Println("failed to get discussion message id:", err)
 			return 0, err

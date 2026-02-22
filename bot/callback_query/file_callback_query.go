@@ -80,8 +80,6 @@ func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	chatID := message.Chat.ID
 	messageID := message.MessageID
 
-	log.Println("chatID", chatID)
-	log.Println("messageID", messageID)
 	log.Println("download file", infoHash, fileIndex)
 
 	// 下载进度
@@ -208,6 +206,9 @@ Files:
 			log.Println("send download message error", err)
 			return
 		}
+
+		log.Println("send download message success", messageId_)
+
 		messageId = int64(messageId_)
 	}
 
