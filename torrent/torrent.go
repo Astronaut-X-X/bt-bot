@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	downloadDir string = "downloads"
+	DownloadDir string = "downloads"
 
 	globalClientMutex sync.Mutex
 	globalClient      *torrent.Client
@@ -21,14 +21,14 @@ var (
 func init() {
 	downloadCancelMap = make(map[string]context.CancelFunc)
 
-	if err := os.MkdirAll(downloadDir, 0755); err != nil {
+	if err := os.MkdirAll(DownloadDir, 0755); err != nil {
 		log.Println("创建下载目录失败: ", err)
 	}
 }
 
 func InitTorrentClient(debug bool) error {
 	cfg := torrent.NewDefaultClientConfig()
-	cfg.DataDir = downloadDir
+	cfg.DataDir = DownloadDir
 	cfg.Debug = debug
 
 	client, err := torrent.NewClient(cfg)

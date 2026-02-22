@@ -30,7 +30,10 @@ func RecordDownloadMessage(infoHash string, messageID int64) error {
 
 func CheckDownloadComment(infoHash string, index int) (bool, error) {
 	var downloadComment model.DownloadFileComment
-	if err := database.DB.Where("info_hash = ? AND index = ?", infoHash, index).First(&downloadComment).Error; err != nil {
+	err := database.DB.Where("info_hash = ? AND index = ?", infoHash, index).First(&downloadComment).Error
+	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+		return false, err
+	} else if err != nil {
 		return false, err
 	}
 	return true, nil

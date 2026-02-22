@@ -8,6 +8,7 @@ import (
 	"math/rand/v2"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gotd/td/telegram/uploader"
@@ -54,9 +55,26 @@ func SendChannelMessage(text string) (int, error) {
 		}
 	}
 
-	time.Sleep(2 * time.Second)
-
-	return getDiscussionMessageId(client, msgId, channelId, accessHash)
+	sleepTime := 2 * time.Second
+	for {
+		time.Sleep(sleepTime)
+		msgId, err = getDiscussionMessageId(client, msgId, channelId, accessHash)
+		if err == nil {
+			return msgId, nil
+		}
+		if !strings.Contains(err.Error(), "FLOOD_WAIT") {
+			log.Println("failed to get discussion message id:", err)
+			return 0, err
+		}
+		// FLOOD_WAIT 错误时指数退避，最大60秒
+		if sleepTime < 60*time.Second {
+			sleepTime *= 2
+			if sleepTime > 60*time.Second {
+				sleepTime = 60 * time.Second
+			}
+		}
+		log.Printf("failed to get discussion message id, sleep for %d seconds ", sleepTime/time.Second)
+	}
 }
 
 func getInputPeerChannel(client *Client) (channelId int64, accessHash int64, err error) {

@@ -13,9 +13,9 @@ import (
 var _downloadMapLock sync.Mutex
 
 type ProgressParams struct {
-	bytesCompleted int64
-	totalBytes     int64
-	fileName       string
+	BytesCompleted int64
+	TotalBytes     int64
+	FileName       string
 }
 
 type DownloadParams struct {
@@ -98,9 +98,9 @@ func Download(params DownloadParams) {
 			}
 			// 调用进度回调
 			params.ProgressCallback(ProgressParams{
-				bytesCompleted: bytesCompleted,
-				totalBytes:     totalLength,
-				fileName:       filename,
+				BytesCompleted: bytesCompleted,
+				TotalBytes:     totalLength,
+				FileName:       filename,
 			})
 			time.Sleep(5 * time.Second) // 每5秒刷新一次进度
 		}

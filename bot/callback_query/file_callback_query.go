@@ -3,9 +3,13 @@ package callback_query
 import (
 	"bt-bot/bot/common"
 	"bt-bot/bot/i18n"
+	"bt-bot/telegram"
 	"bt-bot/torrent"
+	"bt-bot/utils"
 	"errors"
+	"fmt"
 	"log"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -13,24 +17,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-/*
-检查是否有正在下载的文件，如果有则取消下载，并删除下载的文件
-defer 删除标识
-检查是否当天还有剩余数量
-defer 减少当天剩余数量
-
-开始下载文件
-发送下载文件消息，带上停止按钮
-
-循环：实时返回下载进度
-停止：发送停止消息
-
-下载完成，寻找到文件路径
-
-使用另一个Tg号，在频道里发送消息
-需要一个表结构存放之前发送过的消息，提供查询方法
-消息是文件解析出的内容，再在评论里回复该文件即可
-*/
+// 文件下载回调处理
 func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	// 校验下载限制
 	user, _, err := common.UserAndPermissions(update.CallbackQuery.From.ID)
@@ -97,70 +84,67 @@ func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	log.Println("messageID", messageID)
 	log.Println("download file", infoHash, fileIndex)
 
+	// 下载进度
+	progressCallback := func(params torrent.ProgressParams) {
+		message := i18n.Text(i18n.DownloadFailedMessageCode, user.Language)
+		message = i18n.Replace(message, map[string]string{
+			i18n.DownloadMessagePlaceholderMagnet:         infoHash,
+			i18n.DownloadMessagePlaceholderDownloadFiles:  params.FileName,
+			i18n.DownloadMessagePlaceholderPercent:        utils.FormatPercentage(params.BytesCompleted, params.TotalBytes),
+			i18n.DownloadMessagePlaceholderBytesCompleted: utils.FormatBytesToSizeString(params.BytesCompleted),
+			i18n.DownloadMessagePlaceholderTotalBytes:     utils.FormatBytesToSizeString(params.TotalBytes),
+		})
+		newEditMessage := tgbotapi.NewEditMessageText(chatID, messageID, message)
+		newEditMessage.ReplyMarkup = stopDownloadReplyMarkup(infoHash, fileIndex, user.Language)
+		bot.Send(newEditMessage)
+	}
+
+	// 下载取消
+	cancelCallback := func(t *t.Torrent) {
+		message := i18n.Text(i18n.DownloadFailedMessageCode, user.Language)
+		message = i18n.Replace(message, map[string]string{
+			i18n.DownloadMessagePlaceholderMagnet:        infoHash,
+			i18n.DownloadMessagePlaceholderErrorMessage:  "Cancel",
+			i18n.DownloadMessagePlaceholderDownloadFiles: parseFileName(t, fileIndex),
+		})
+		newEditMessage := tgbotapi.NewEditMessageText(chatID, messageID, message)
+		bot.Send(newEditMessage)
+	}
+
+	// 下载超时
+	timeoutCallback := func(t *t.Torrent) {
+		message := i18n.Text(i18n.DownloadFailedMessageCode, user.Language)
+		message = i18n.Replace(message, map[string]string{
+			i18n.DownloadMessagePlaceholderMagnet:        infoHash,
+			i18n.DownloadMessagePlaceholderErrorMessage:  "Timeout",
+			i18n.DownloadMessagePlaceholderDownloadFiles: parseFileName(t, fileIndex),
+		})
+		newEditMessage := tgbotapi.NewEditMessageText(chatID, messageID, message)
+		bot.Send(newEditMessage)
+	}
+
+	// 下载成功
+	successCallback := func(t *t.Torrent) {
+
+		message := i18n.Text(i18n.DownloadSuccessMessageCode, user.Language)
+		message = i18n.Replace(message, map[string]string{
+			i18n.DownloadMessagePlaceholderMagnet:          infoHash,
+			i18n.DownloadMessagePlaceholderDownloadFiles:   parseFileName(t, fileIndex),
+			i18n.DownloadMessagePlaceholderDownloadChannel: "@tgqpXOZ2tzXN",
+		})
+		bot.Send(tgbotapi.NewEditMessageText(chatID, messageID, message))
+	}
+
 	params := torrent.DownloadParams{
-		InfoHash:  infoHash,
-		FileIndex: fileIndex,
-		ProgressCallback: func(progressParams torrent.ProgressParams) {
-			log.Println("progressParams", progressParams)
-		},
-		CancelCallback: func(t *t.Torrent) {
-			log.Println("cancel callback")
-		},
-		TimeoutCallback: func(t *t.Torrent) {
-			log.Println("timeout callback")
-		},
-		SuccessCallback: func(t *t.Torrent) {
-			log.Println("success callback")
-		},
+		InfoHash:         infoHash,
+		FileIndex:        fileIndex,
+		ProgressCallback: progressCallback,
+		CancelCallback:   cancelCallback,
+		TimeoutCallback:  timeoutCallback,
+		SuccessCallback:  successCallback,
 	}
 
 	torrent.Download(params)
-	// infoHash,
-	// fileIndex,
-	// func(bytesCompleted, totalBytes int64, fileName string) {
-	// 	downloadProcessingMessage := i18n.Text(i18n.DownloadProcessingMessageCode, user.Language)
-	// 	downloadProcessingMessage = i18n.Replace(downloadProcessingMessage, map[string]string{
-	// 		i18n.DownloadMessagePlaceholderMagnet:         infoHash,
-	// 		i18n.DownloadMessagePlaceholderDownloadFiles:  fileName,
-	// 		i18n.DownloadMessagePlaceholderPercent:        utils.FormatPercentage(bytesCompleted, totalBytes),
-	// 		i18n.DownloadMessagePlaceholderBytesCompleted: utils.FormatBytesToSizeString(bytesCompleted),
-	// 		i18n.DownloadMessagePlaceholderTotalBytes:     utils.FormatBytesToSizeString(totalBytes),
-	// 	})
-	// 	newEditMessage := tgbotapi.NewEditMessageText(chatID, messageID, downloadProcessingMessage)
-	// 	newEditMessage.ReplyMarkup = stopDownloadReplyMarkup(infoHash, fileIndex, user.Language)
-	// 	bot.Send(newEditMessage)
-	// },
-	// func(fileName string) {
-	// 	downloadFailedMessage := i18n.Text(i18n.DownloadFailedMessageCode, user.Language)
-	// 	downloadFailedMessage = i18n.Replace(downloadFailedMessage, map[string]string{
-	// 		i18n.DownloadMessagePlaceholderMagnet:        infoHash,
-	// 		i18n.DownloadMessagePlaceholderErrorMessage:  "Cancel",
-	// 		i18n.DownloadMessagePlaceholderDownloadFiles: fileName,
-	// 	})
-	// 	newEditMessage := tgbotapi.NewEditMessageText(chatID, messageID, downloadFailedMessage)
-	// 	bot.Send(newEditMessage)
-	// },
-	// func(fileName string) {
-	// 	downloadFailedMessage := i18n.Text(i18n.DownloadFailedMessageCode, user.Language)
-	// 	downloadFailedMessage = i18n.Replace(downloadFailedMessage, map[string]string{
-	// 		i18n.DownloadMessagePlaceholderMagnet:        infoHash,
-	// 		i18n.DownloadMessagePlaceholderErrorMessage:  "Timeout",
-	// 		i18n.DownloadMessagePlaceholderDownloadFiles: fileName,
-	// 	})
-	// 	newEditMessage := tgbotapi.NewEditMessageText(chatID, messageID, downloadFailedMessage)
-	// 	bot.Send(newEditMessage)
-	// },
-	// func(fileName string) {
-
-	// 	downloadSuccessMessage := i18n.Text(i18n.DownloadSuccessMessageCode, user.Language)
-	// 	downloadSuccessMessage = i18n.Replace(downloadSuccessMessage, map[string]string{
-	// 		i18n.DownloadMessagePlaceholderMagnet:          infoHash,
-	// 		i18n.DownloadMessagePlaceholderDownloadFiles:   fileName,
-	// 		i18n.DownloadMessagePlaceholderDownloadChannel: "@tgqpXOZ2tzXN",
-	// 	})
-	// 	bot.Send(tgbotapi.NewEditMessageText(chatID, messageID, downloadSuccessMessage))
-
-	// },
 }
 
 func parseFileCallbackQueryData(data string) (string, int, error) {
@@ -183,5 +167,95 @@ func stopDownloadReplyMarkup(infoHash string, fileIndex int, language string) *t
 		InlineKeyboard: [][]tgbotapi.InlineKeyboardButton{
 			{tgbotapi.NewInlineKeyboardButtonData(i18n.Text(i18n.ButtonStopDownloadCode, language), data)},
 		},
+	}
+}
+
+func parseFileName(t *t.Torrent, fileIndex int) string {
+	if fileIndex == -1 {
+		return "All files"
+	}
+	files := t.Files()
+	if fileIndex < 0 || fileIndex >= len(files) {
+		return "Invalid file index"
+	}
+	return files[fileIndex].DisplayPath()
+}
+
+func sendDownloadMessage(infoHash string, fileIndex int, t *t.Torrent) {
+	messageId, ok, _ := common.CheckDownloadMessage(infoHash)
+	if !ok {
+		messageText := `
+#{info_hash}
+
+Magnet: {magnet}
+Files:
+{files}
+		`
+		messageText = strings.ReplaceAll(messageText, "{info_hash}", infoHash)
+		messageText = strings.ReplaceAll(messageText, "{magnet}", "magnet:?xt=urn:btih:"+infoHash)
+		files := t.Info().Files
+		filesText := ""
+		for _, file := range files {
+			filesText += fmt.Sprintf("%s (%s)\n", file.DisplayPath(t.Info()), utils.FormatBytesToSizeString(file.Length))
+		}
+		messageText = strings.ReplaceAll(messageText, "{files}", filesText)
+
+		messageId_, err := telegram.SendChannelMessage(messageText)
+		if err != nil {
+			log.Println("send download message error", err)
+			return
+		}
+		messageId = int64(messageId_)
+	}
+
+	err := common.RecordDownloadMessage(infoHash, messageId)
+	if err != nil {
+		log.Println("record download message error", err)
+	}
+
+	log.Println("send download message success", messageId)
+
+	sendDownloadComment(infoHash, fileIndex, t, messageId)
+}
+
+func sendDownloadComment(infoHash string, fileIndex int, t *t.Torrent, messageId int64) {
+	ok, err := common.CheckDownloadComment(infoHash, fileIndex)
+	if ok {
+		return
+	}
+	if err != nil {
+		log.Println("check download comment error", err)
+		return
+	}
+
+	filePath := []string{}
+	if fileIndex == -1 {
+		fileName := t.Info().Name
+		if t.Info().NameUtf8 != "" {
+			fileName = t.Info().NameUtf8
+		}
+
+		if t.Info().IsDir() {
+			filePath = append(filePath, filepath.Join(torrent.DownloadDir, fileName))
+		} else {
+			for _, file := range t.Info().Files {
+				filePath = append(filePath, filepath.Join(torrent.DownloadDir, file.DisplayPath(t.Info())))
+			}
+		}
+	} else {
+		filePath = append(filePath, t.Info().Files[fileIndex].DisplayPath(t.Info()))
+	}
+
+	for _, filePath := range filePath {
+		err := telegram.SendCommentMessage(filePath, int(messageId))
+		if err != nil {
+			log.Println("send download comment error", err)
+			return
+		}
+
+	}
+	if err := common.RecordDownloadComment(infoHash, fileIndex); err != nil {
+		log.Println("record download comment error", err)
+		return
 	}
 }
