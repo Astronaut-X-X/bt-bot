@@ -1,110 +1,77 @@
-package command
+package callback_query
 
 import (
-	"bt-bot/bot/common"
-	"bt-bot/bot/i18n"
-	"bt-bot/database/model"
-	"bt-bot/torrent"
-	"bt-bot/utils"
+	"errors"
 	"fmt"
 	"log"
 	"strconv"
 	"strings"
 
+	"bt-bot/bot/common"
+	"bt-bot/bot/i18n"
+	"bt-bot/database/model"
+	"bt-bot/utils"
+
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
-	msg := update.Message
-	chatID := msg.Chat.ID
-	userID := msg.From.ID
-
-	user, _, err := common.UserAndPermissions(userID)
+func MoreCallbackQuery(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
+	// // 校验下载限制
+	user, _, err := common.UserAndPermissions(update.CallbackQuery.From.ID)
 	if err != nil {
+		log.Println("get user and permissions error", err)
+		bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "❌ get user and permissions error"))
 		return
 	}
 
-	// 提取磁力链接
-	magnetLink := torrent.ExtractMagnetLink(msg.Text)
-	if magnetLink == "" {
-		messageText := i18n.Text(i18n.MagnetInvalidLinkMessageCode, user.Language)
-		message := i18n.Replace(messageText, map[string]string{
-			i18n.MagnetMessagePlaceholderMagnetLink: msg.Text,
-		})
-		reply := tgbotapi.NewMessage(chatID, message)
-		bot.Send(reply)
+	data := update.CallbackQuery.Data
+	infoHash, page, err := parseMoreCallbackQueryData(data)
+	if err != nil {
+		log.Println("parse more callback query data error", err)
+		bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "❌ parse more callback query data error"))
 		return
 	}
 
-	// 发送解析中消息
-	processingMessage := i18n.Text(i18n.MagnetProcessingMessageCode, user.Language)
-	processingMsg := tgbotapi.NewMessage(chatID, processingMessage)
-	sentMsg, _ := bot.Send(processingMsg)
-
-	info, err := parseMagnetLink(magnetLink)
+	torrentInfo, err := common.GetTorrentInfo(infoHash)
 	if err != nil {
-		errorMessage := i18n.Text(i18n.MagnetErrorMessageCode, user.Language)
-		errorMessage = i18n.Replace(errorMessage, map[string]string{
-			i18n.MagnetMessagePlaceholderErrorMessage: err.Error(),
-		})
-		editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, errorMessage)
-		bot.Send(editMsg)
+		log.Println("get torrent error", err)
+		bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "❌ get torrent error"))
+		return
+	}
+
+	if torrentInfo.IsDir {
+		bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "❌ torrent is a directory"))
 		return
 	}
 
 	successMessage := i18n.Text(i18n.MagnetSuccessMessageCode, user.Language)
 	successMessage = i18n.Replace(successMessage, map[string]string{
-		i18n.MagnetMessagePlaceholderMagnetLink: magnetLink,
-		i18n.MagnetMessagePlaceholderFileName:   info.Name,
-		i18n.MagnetMessagePlaceholderFileSize:   utils.FormatBytesToSizeString(info.TotalLength()),
-		i18n.MagnetMessagePlaceholderFileCount:  strconv.Itoa(len(info.Files)),
-		i18n.MagnetMessagePlaceholderFileList:   strings.Join(fileList(info.Files), "\n"),
+		i18n.MagnetMessagePlaceholderMagnetLink: fmt.Sprintf("magnet:?xt=urn:btih:%s", infoHash),
+		i18n.MagnetMessagePlaceholderFileName:   torrentInfo.Name,
+		i18n.MagnetMessagePlaceholderFileSize:   utils.FormatBytesToSizeString(torrentInfo.TotalLength()),
+		i18n.MagnetMessagePlaceholderFileCount:  strconv.Itoa(len(torrentInfo.Files)),
+		i18n.MagnetMessagePlaceholderFileList:   strings.Join(fileList(torrentInfo.Files), "\n"),
 	})
 
-	editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, successMessage)
-	editMsg.ReplyMarkup = createFileButtons(info.Files, info.InfoHash)
-
+	editMsg := tgbotapi.NewEditMessageText(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.Message.MessageID, successMessage)
+	editMsg.ReplyMarkup = createFileButtons(torrentInfo.Files, infoHash, page)
 	bot.Send(editMsg)
 }
 
-// parse magnet link to info
-func parseMagnetLink(magnetLink string) (*model.Torrent, error) {
-	var info_ model.Torrent
-
-	infoHash := torrent.ExtractTorrentInfoHash(magnetLink)
-
-	dbInfo, err := common.GetTorrentInfo(infoHash)
+func parseMoreCallbackQueryData(data string) (string, int, error) {
+	parts := strings.Split(data, "_")
+	if len(parts) != 4 {
+		return "", 0, errors.New("invalid data")
+	}
+	if parts[0]+"_"+parts[1] != "info_more" {
+		return "", 0, errors.New("invalid data")
+	}
+	infoHash := parts[2]
+	page, err := strconv.Atoi(parts[3])
 	if err != nil {
-		log.Println("common.GetTorrentInfo err: ", err)
+		return "", 0, err
 	}
-	if dbInfo != nil {
-		info_ = *dbInfo
-	} else {
-		// 提取 InfoHash
-		info, err := torrent.ParseMagnetLink(magnetLink)
-		if err != nil {
-			return nil, err
-		}
-		defer func() {
-			if info != nil {
-				defer func() {
-					if r := recover(); r != nil {
-						log.Println("Drop torrent failed: ", r)
-					}
-				}()
-				info.Drop()
-			}
-		}()
-
-		parseInfo := info.Info()
-		torrentInfo, err := common.SaveTorrentInfo(infoHash, parseInfo)
-		if err != nil {
-			log.Panicln("common.SaveTorrentInfo err: ", err)
-		}
-		info_ = *torrentInfo
-	}
-
-	return &info_, nil
+	return infoHash, page, nil
 }
 
 func fileList(files []model.TorrentFile) []string {
@@ -121,18 +88,12 @@ func fileList(files []model.TorrentFile) []string {
 }
 
 // createFileButtons 创建文件按钮
-func createFileButtons(files []model.TorrentFile, infoHash string) *tgbotapi.InlineKeyboardMarkup {
+func createFileButtons(files []model.TorrentFile, infoHash string, page int) *tgbotapi.InlineKeyboardMarkup {
 	log.Println("infoHash", infoHash)
 
 	const maxButtons = 50       // Telegram 限制每个键盘最多 100 个按钮，这里设置 50 个文件按钮
 	const maxButtonTextLen = 64 // Telegram 按钮 callback_data 最大 64 字符
 	var buttons [][]tgbotapi.InlineKeyboardButton
-
-	// 计算要显示的文件数量
-	fileCount := len(files)
-	if fileCount > maxButtons {
-		fileCount = maxButtons
-	}
 
 	// 添加所有文件按钮（全体下载，index = -1）
 	buttonText := "📄 All Files"
@@ -145,7 +106,7 @@ func createFileButtons(files []model.TorrentFile, infoHash string) *tgbotapi.Inl
 	buttons = append(buttons, []tgbotapi.InlineKeyboardButton{button})
 
 	// 为每个文件创建按钮
-	for i := 0; i < fileCount; i++ {
+	for i := (page - 1) * maxButtons; i < page*maxButtons; i++ {
 		file := files[i]
 		path := file.PathUtf8
 		if len(path) == 0 {
@@ -166,11 +127,20 @@ func createFileButtons(files []model.TorrentFile, infoHash string) *tgbotapi.Inl
 
 	// 如果文件数量超过显示限制，添加"查看更多"提示
 	if len(files) > maxButtons {
-		infoButton := tgbotapi.NewInlineKeyboardButtonData(
-			fmt.Sprintf("📋 后一页 >"),
-			fmt.Sprintf("info_more_%s_1", infoHash),
-		)
-		buttons = append(buttons, []tgbotapi.InlineKeyboardButton{infoButton})
+		if page > 0 {
+			infoButton := tgbotapi.NewInlineKeyboardButtonData(
+				fmt.Sprintf("📋 前一页 <"),
+				fmt.Sprintf("info_more_%s_%d", infoHash, page-1),
+			)
+			buttons = append(buttons, []tgbotapi.InlineKeyboardButton{infoButton})
+		}
+		if page*maxButtons < len(files) {
+			infoButton := tgbotapi.NewInlineKeyboardButtonData(
+				fmt.Sprintf("📋 后一页 >"),
+				fmt.Sprintf("info_more_%s_%d", infoHash, page+1),
+			)
+			buttons = append(buttons, []tgbotapi.InlineKeyboardButton{infoButton})
+		}
 	}
 
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(buttons...)
