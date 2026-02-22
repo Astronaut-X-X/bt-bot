@@ -57,7 +57,7 @@ func SendChannelMessage(text string) (int, error) {
 
 	log.Println("send message success", msgId)
 
-	sleepTime := 2 * time.Second
+	sleepTime := 4 * time.Second
 	for {
 		time.Sleep(sleepTime)
 		msgId, err = getDiscussionMessageId(client, msgId, channelId, accessHash)
