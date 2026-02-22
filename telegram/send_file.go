@@ -267,7 +267,7 @@ func uploadFile(client *Client, path string) (tg.InputFileClass, error) {
 
 	limitedReader := &LimitedReaderFile{
 		file:          *file,
-		limitedReader: io.LimitReader(file, 10*1024*1024),
+		limitedReader: io.LimitReader(file, 5*1024*1024),
 	}
 
 	// 上传文件
