@@ -257,7 +257,6 @@ func SendCommentMessage(path string, msgId int) error {
 }
 
 func uploadFile(client *Client, path string) (tg.InputFileClass, error) {
-	// 读取文件，每次最多读取 5MB
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("open file failed: %w", err)
@@ -265,8 +264,11 @@ func uploadFile(client *Client, path string) (tg.InputFileClass, error) {
 	defer file.Close()
 
 	// 上传文件
+	// partSize 设置为 512KB (524288 字节)，这是 Telegram 官方推荐的值
+	// 参考: https://core.telegram.org/api/files#uploading-files
+	// 使用 512KB 可以避免过多的协议开销，并且能够达到最大文件大小限制
 	up := uploader.NewUploader(client.API())
-	up.WithPartSize(524288 * 2 * 5)
+	up.WithPartSize(524288) // 512KB
 	up.WithThreads(5)
 	up.WithProgress(&uploadProgress{})
 	return up.FromFile(context.TODO(), file)
