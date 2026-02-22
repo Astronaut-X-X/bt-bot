@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	t "github.com/anacrolix/torrent"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -97,18 +98,18 @@ func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	log.Println("download file", infoHash, fileIndex)
 
 	params := torrent.DownloadParams{
-		infoHash:  infoHash,
-		fileIndex: fileIndex,
-		progressCallback: func(progressParams torrent.ProgressParams) {
+		InfoHash:  infoHash,
+		FileIndex: fileIndex,
+		ProgressCallback: func(progressParams torrent.ProgressParams) {
 			log.Println("progressParams", progressParams)
 		},
-		cancelCallback: func(t *torrent.Torrent) {
+		CancelCallback: func(t *t.Torrent) {
 			log.Println("cancel callback")
 		},
-		timeoutCallback: func(t *torrent.Torrent) {
+		TimeoutCallback: func(t *t.Torrent) {
 			log.Println("timeout callback")
 		},
-		successCallback: func(t *torrent.Torrent) {
+		SuccessCallback: func(t *t.Torrent) {
 			log.Println("success callback")
 		},
 	}
