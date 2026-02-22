@@ -68,7 +68,8 @@ func SendChannelMessage(text string) (int, error) {
 
 		log.Println("failed to get discussion message id:", err)
 
-		if !strings.Contains(err.Error(), "FLOOD_WAIT") && !strings.Contains(err.Error(), "MSG_ID_INVALID") {
+		if !(strings.Contains(err.Error(), "FLOOD_WAIT") ||
+			strings.Contains(err.Error(), "MSG_ID_INVALID")) {
 			log.Println("failed to get discussion message id:", err)
 			return 0, err
 		}

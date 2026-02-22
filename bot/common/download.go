@@ -41,8 +41,8 @@ func CheckDownloadComment(infoHash string, index int) (bool, error) {
 
 func RecordDownloadComment(infoHash string, index int) error {
 	downloadComment := model.DownloadFileComment{
-		InfoHash: infoHash,
-		Index:    index,
+		InfoHash:  infoHash,
+		FileIndex: index,
 	}
 	return database.DB.Save(&downloadComment).Error
 }

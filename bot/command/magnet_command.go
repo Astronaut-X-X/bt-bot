@@ -155,8 +155,8 @@ func createFileButtons(files []model.TorrentFile, infoHash string) *tgbotapi.Inl
 		fileName := path
 		emoji := emojifyFilename(fileName)
 
-		buttonText := fmt.Sprintf("%s %d.%s", emoji, file.Index+1, fileName)
-		callbackData := fmt.Sprintf("file_%s_%d", infoHash, file.Index)
+		buttonText := fmt.Sprintf("%s %d.%s", emoji, file.FileIndex+1, fileName)
+		callbackData := fmt.Sprintf("file_%s_%d", infoHash, file.FileIndex)
 		if len(callbackData) > maxButtonTextLen {
 			callbackData = callbackData[:maxButtonTextLen]
 		}
