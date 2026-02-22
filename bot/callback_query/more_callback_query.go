@@ -39,11 +39,6 @@ func MoreCallbackQuery(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 		return
 	}
 
-	if torrentInfo.IsDir {
-		bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "❌ torrent is a directory"))
-		return
-	}
-
 	successMessage := i18n.Text(i18n.MagnetSuccessMessageCode, user.Language)
 	successMessage = i18n.Replace(successMessage, map[string]string{
 		i18n.MagnetMessagePlaceholderMagnetLink: fmt.Sprintf("magnet:?xt=urn:btih:%s", infoHash),
