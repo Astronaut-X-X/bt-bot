@@ -21,6 +21,8 @@ var models = []any{
 	&model.Permissions{},
 	&model.TorrentInfo{},
 	&model.TorrentFile{},
+	&model.DownloadFileMessage{},
+	&model.DownloadFileComment{},
 }
 
 func InitDatabase(config Config) error {
