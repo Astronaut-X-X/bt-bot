@@ -35,3 +35,8 @@ Thumbs.db
 # Go 工作区文件
 go.work
 
+
+# 会话文件
+telegram/sessions/*.json
+cmd/login/sessions/*.json
+cmd/login/login
