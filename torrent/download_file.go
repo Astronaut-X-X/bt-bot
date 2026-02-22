@@ -39,7 +39,7 @@ func Download(params DownloadParams) {
 	}
 
 	// 获取总长度
-	totalLength := t.Info().TotalLength()
+	totalLength := int64(0)
 
 	// 获取文件列表
 	files := t.Files()
@@ -49,12 +49,14 @@ func Download(params DownloadParams) {
 			files[i].SetPriority(torrent.PiecePriorityNormal)
 		}
 		filename = "All files"
+		totalLength = t.Info().TotalLength()
 	} else {
 		for i := range files {
 			files[i].SetPriority(torrent.PiecePriorityNone)
 		}
 		files[params.FileIndex].SetPriority(torrent.PiecePriorityNormal)
 		filename = files[params.FileIndex].DisplayPath()
+		totalLength = files[params.FileIndex].Length()
 	}
 	t.DownloadAll()
 
