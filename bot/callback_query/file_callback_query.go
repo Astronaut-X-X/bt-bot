@@ -4,7 +4,6 @@ import (
 	"bt-bot/bot/common"
 	"bt-bot/bot/i18n"
 	"bt-bot/torrent"
-	"bt-bot/utils"
 	"errors"
 	"log"
 	"strconv"
@@ -93,54 +92,74 @@ func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	chatID := message.Chat.ID
 	messageID := message.MessageID
 
+	log.Println("chatID", chatID)
+	log.Println("messageID", messageID)
 	log.Println("download file", infoHash, fileIndex)
 
-	torrent.Download(
-		infoHash,
-		fileIndex,
-		func(bytesCompleted, totalBytes int64, fileName string) {
-			downloadProcessingMessage := i18n.Text(i18n.DownloadProcessingMessageCode, user.Language)
-			downloadProcessingMessage = i18n.Replace(downloadProcessingMessage, map[string]string{
-				i18n.DownloadMessagePlaceholderMagnet:         infoHash,
-				i18n.DownloadMessagePlaceholderDownloadFiles:  fileName,
-				i18n.DownloadMessagePlaceholderPercent:        utils.FormatPercentage(bytesCompleted, totalBytes),
-				i18n.DownloadMessagePlaceholderBytesCompleted: utils.FormatBytesToSizeString(bytesCompleted),
-				i18n.DownloadMessagePlaceholderTotalBytes:     utils.FormatBytesToSizeString(totalBytes),
-			})
-			newEditMessage := tgbotapi.NewEditMessageText(chatID, messageID, downloadProcessingMessage)
-			newEditMessage.ReplyMarkup = stopDownloadReplyMarkup(infoHash, fileIndex, user.Language)
-			bot.Send(newEditMessage)
+	params := torrent.DownloadParams{
+		infoHash:  infoHash,
+		fileIndex: fileIndex,
+		progressCallback: func(progressParams torrent.ProgressParams) {
+			log.Println("progressParams", progressParams)
 		},
-		func(fileName string) {
-			downloadFailedMessage := i18n.Text(i18n.DownloadFailedMessageCode, user.Language)
-			downloadFailedMessage = i18n.Replace(downloadFailedMessage, map[string]string{
-				i18n.DownloadMessagePlaceholderMagnet:        infoHash,
-				i18n.DownloadMessagePlaceholderErrorMessage:  "Cancel",
-				i18n.DownloadMessagePlaceholderDownloadFiles: fileName,
-			})
-			newEditMessage := tgbotapi.NewEditMessageText(chatID, messageID, downloadFailedMessage)
-			bot.Send(newEditMessage)
+		cancelCallback: func(t *torrent.Torrent) {
+			log.Println("cancel callback")
 		},
-		func(fileName string) {
-			downloadFailedMessage := i18n.Text(i18n.DownloadFailedMessageCode, user.Language)
-			downloadFailedMessage = i18n.Replace(downloadFailedMessage, map[string]string{
-				i18n.DownloadMessagePlaceholderMagnet:        infoHash,
-				i18n.DownloadMessagePlaceholderErrorMessage:  "Timeout",
-				i18n.DownloadMessagePlaceholderDownloadFiles: fileName,
-			})
-			newEditMessage := tgbotapi.NewEditMessageText(chatID, messageID, downloadFailedMessage)
-			bot.Send(newEditMessage)
+		timeoutCallback: func(t *torrent.Torrent) {
+			log.Println("timeout callback")
 		},
-		func(fileName string) {
-			downloadSuccessMessage := i18n.Text(i18n.DownloadSuccessMessageCode, user.Language)
-			downloadSuccessMessage = i18n.Replace(downloadSuccessMessage, map[string]string{
-				i18n.DownloadMessagePlaceholderMagnet:          infoHash,
-				i18n.DownloadMessagePlaceholderDownloadFiles:   fileName,
-				i18n.DownloadMessagePlaceholderDownloadChannel: "@tgqpXOZ2tzXN",
-			})
-			bot.Send(tgbotapi.NewEditMessageText(chatID, messageID, downloadSuccessMessage))
+		successCallback: func(t *torrent.Torrent) {
+			log.Println("success callback")
 		},
-	)
+	}
+
+	torrent.Download(params)
+	// infoHash,
+	// fileIndex,
+	// func(bytesCompleted, totalBytes int64, fileName string) {
+	// 	downloadProcessingMessage := i18n.Text(i18n.DownloadProcessingMessageCode, user.Language)
+	// 	downloadProcessingMessage = i18n.Replace(downloadProcessingMessage, map[string]string{
+	// 		i18n.DownloadMessagePlaceholderMagnet:         infoHash,
+	// 		i18n.DownloadMessagePlaceholderDownloadFiles:  fileName,
+	// 		i18n.DownloadMessagePlaceholderPercent:        utils.FormatPercentage(bytesCompleted, totalBytes),
+	// 		i18n.DownloadMessagePlaceholderBytesCompleted: utils.FormatBytesToSizeString(bytesCompleted),
+	// 		i18n.DownloadMessagePlaceholderTotalBytes:     utils.FormatBytesToSizeString(totalBytes),
+	// 	})
+	// 	newEditMessage := tgbotapi.NewEditMessageText(chatID, messageID, downloadProcessingMessage)
+	// 	newEditMessage.ReplyMarkup = stopDownloadReplyMarkup(infoHash, fileIndex, user.Language)
+	// 	bot.Send(newEditMessage)
+	// },
+	// func(fileName string) {
+	// 	downloadFailedMessage := i18n.Text(i18n.DownloadFailedMessageCode, user.Language)
+	// 	downloadFailedMessage = i18n.Replace(downloadFailedMessage, map[string]string{
+	// 		i18n.DownloadMessagePlaceholderMagnet:        infoHash,
+	// 		i18n.DownloadMessagePlaceholderErrorMessage:  "Cancel",
+	// 		i18n.DownloadMessagePlaceholderDownloadFiles: fileName,
+	// 	})
+	// 	newEditMessage := tgbotapi.NewEditMessageText(chatID, messageID, downloadFailedMessage)
+	// 	bot.Send(newEditMessage)
+	// },
+	// func(fileName string) {
+	// 	downloadFailedMessage := i18n.Text(i18n.DownloadFailedMessageCode, user.Language)
+	// 	downloadFailedMessage = i18n.Replace(downloadFailedMessage, map[string]string{
+	// 		i18n.DownloadMessagePlaceholderMagnet:        infoHash,
+	// 		i18n.DownloadMessagePlaceholderErrorMessage:  "Timeout",
+	// 		i18n.DownloadMessagePlaceholderDownloadFiles: fileName,
+	// 	})
+	// 	newEditMessage := tgbotapi.NewEditMessageText(chatID, messageID, downloadFailedMessage)
+	// 	bot.Send(newEditMessage)
+	// },
+	// func(fileName string) {
+
+	// 	downloadSuccessMessage := i18n.Text(i18n.DownloadSuccessMessageCode, user.Language)
+	// 	downloadSuccessMessage = i18n.Replace(downloadSuccessMessage, map[string]string{
+	// 		i18n.DownloadMessagePlaceholderMagnet:          infoHash,
+	// 		i18n.DownloadMessagePlaceholderDownloadFiles:   fileName,
+	// 		i18n.DownloadMessagePlaceholderDownloadChannel: "@tgqpXOZ2tzXN",
+	// 	})
+	// 	bot.Send(tgbotapi.NewEditMessageText(chatID, messageID, downloadSuccessMessage))
+
+	// },
 }
 
 func parseFileCallbackQueryData(data string) (string, int, error) {

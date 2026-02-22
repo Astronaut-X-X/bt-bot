@@ -20,7 +20,7 @@ func StopCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 		return
 	}
 
-	torrent.CancelDownload(infoHash, fileIndex)
+	torrent.DownloadCancel(infoHash, fileIndex)
 }
 
 func parseStopCallbackQueryData(data string) (string, int, error) {

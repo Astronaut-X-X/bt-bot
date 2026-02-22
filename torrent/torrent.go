@@ -16,8 +16,6 @@ var (
 
 	globalClientMutex sync.Mutex
 	globalClient      *torrent.Client
-
-	downloadCancelMap map[string]context.CancelFunc
 )
 
 func init() {
