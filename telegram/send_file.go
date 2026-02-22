@@ -3,7 +3,6 @@ package telegram
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"math/rand/v2"
 	"mime"
@@ -257,14 +256,6 @@ func SendCommentMessage(path string, msgId int) error {
 }
 
 func uploadFile(client *Client, path string) (tg.InputFileClass, error) {
-	// 读取文件
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, fmt.Errorf("open file failed: %w", err)
-	}
-	defer file.Close()
-
-	// 上传文件
 	up := uploader.NewUploader(client.API())
-	return up.FromFile(context.TODO(), file)
+	return up.FromPath(context.TODO(), path)
 }
