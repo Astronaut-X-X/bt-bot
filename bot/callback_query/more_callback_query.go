@@ -122,7 +122,7 @@ func createFileButtons(files []model.TorrentFile, infoHash string, page int) *tg
 
 	// 如果文件数量超过显示限制，添加"查看更多"提示
 	if len(files) > maxButtons {
-		if page < 1 {
+		if page > 1 {
 			infoButton := tgbotapi.NewInlineKeyboardButtonData(
 				fmt.Sprintf("📋 前一页 <"),
 				fmt.Sprintf("info_more_%s_%d", infoHash, page-1),
