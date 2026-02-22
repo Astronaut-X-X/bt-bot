@@ -232,21 +232,22 @@ func sendDownloadComment(infoHash string, fileIndex int, t *t.Torrent, messageId
 	}
 
 	filePaths := []string{}
+	fileName := t.Info().Name
+	if t.Info().NameUtf8 != "" {
+		fileName = t.Info().NameUtf8
+	}
+	downloadDir := filepath.Join(torrent.DownloadDir, fileName)
 	if fileIndex == -1 {
-		fileName := t.Info().Name
-		if t.Info().NameUtf8 != "" {
-			fileName = t.Info().NameUtf8
-		}
-
 		if t.Info().IsDir() {
-			filePaths = append(filePaths, filepath.Join(torrent.DownloadDir, fileName))
+			filePaths = append(filePaths, downloadDir)
 		} else {
 			for _, file := range t.Info().Files {
-				filePaths = append(filePaths, filepath.Join(torrent.DownloadDir, file.DisplayPath(t.Info())))
+				filePaths = append(filePaths, filepath.Join(downloadDir, file.DisplayPath(t.Info())))
 			}
 		}
 	} else {
-		filePaths = append(filePaths, t.Info().Files[fileIndex].DisplayPath(t.Info()))
+		file := t.Info().Files[fileIndex]
+		filePaths = append(filePaths, filepath.Join(downloadDir, file.DisplayPath(t.Info())))
 	}
 
 	log.Println("send download comment", filePaths)
