@@ -19,40 +19,40 @@ import (
 
 // 文件下载回调处理
 func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
-	// 校验下载限制
-	user, _, err := common.UserAndPermissions(update.CallbackQuery.From.ID)
-	if err != nil {
-		log.Println("get user and permissions error", err)
-		bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "❌ get user and permissions error"))
-		return
-	}
-	// 并发下载限制
-	ok, err := common.DecrementDownloadCount(user.Premium)
-	if !ok {
-		log.Println("download count not enough")
-		bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "❌ download count not enough"))
-		return
-	}
-	if err != nil {
-		log.Println("decrement download count error", err)
-		bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "❌ decrement download count error"))
-		return
-	}
-	defer common.IncrementDownloadCount(user.Premium)
+	// // 校验下载限制
+	// user, _, err := common.UserAndPermissions(update.CallbackQuery.From.ID)
+	// if err != nil {
+	// 	log.Println("get user and permissions error", err)
+	// 	bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "❌ get user and permissions error"))
+	// 	return
+	// }
+	// // 并发下载限制
+	// ok, err := common.DecrementDownloadCount(user.Premium)
+	// if !ok {
+	// 	log.Println("download count not enough")
+	// 	bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "❌ download count not enough"))
+	// 	return
+	// }
+	// if err != nil {
+	// 	log.Println("decrement download count error", err)
+	// 	bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "❌ decrement download count error"))
+	// 	return
+	// }
+	// defer common.IncrementDownloadCount(user.Premium)
 
-	// 每日下载限制
-	ok, err = common.RemainDailyDownload(user.Premium)
-	if !ok {
-		log.Println("daily download count not enough")
-		bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "❌ daily download count not enough"))
-		return
-	}
-	if err != nil {
-		log.Println("remain daily download error", err)
-		bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "❌ remain daily download error"))
-		return
-	}
-	defer common.DecrementDailyDownloadQuantity(user.Premium)
+	// // 每日下载限制
+	// ok, err = common.RemainDailyDownload(user.Premium)
+	// if !ok {
+	// 	log.Println("daily download count not enough")
+	// 	bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "❌ daily download count not enough"))
+	// 	return
+	// }
+	// if err != nil {
+	// 	log.Println("remain daily download error", err)
+	// 	bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "❌ remain daily download error"))
+	// 	return
+	// }
+	// defer common.DecrementDailyDownloadQuantity(user.Premium)
 
 	data := update.CallbackQuery.Data
 	infoHash, fileIndex, err := parseFileCallbackQueryData(data)
