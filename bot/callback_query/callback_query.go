@@ -16,6 +16,8 @@ func CallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 		FileCallbackQueryHandler(bot, update)
 	case strings.HasPrefix(data, "stop_download_"):
 		StopCallbackQueryHandler(bot, update)
+	case strings.HasPrefix(data, "info_more_"):
+		MoreCallbackQuery(bot, update)
 	default:
 		return
 	}
