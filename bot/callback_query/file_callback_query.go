@@ -126,6 +126,9 @@ func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	// 下载成功
 	successCallback := func(t *t.Torrent) {
 
+		// 发送下载消息
+		sendDownloadMessage(infoHash, fileIndex, t)
+
 		message := i18n.Text(i18n.DownloadSuccessMessageCode, user.Language)
 		message = i18n.Replace(message, map[string]string{
 			i18n.DownloadMessagePlaceholderMagnet:          infoHash,
