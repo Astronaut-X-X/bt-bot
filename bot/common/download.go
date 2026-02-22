@@ -44,5 +44,5 @@ func RecordDownloadComment(infoHash string, index int) error {
 		InfoHash:  infoHash,
 		FileIndex: index,
 	}
-	return database.DB.Save(&downloadComment).Error
+	return database.DB.Create(&downloadComment).Error
 }

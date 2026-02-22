@@ -231,7 +231,7 @@ func sendDownloadComment(infoHash string, fileIndex int, t *t.Torrent, messageId
 		log.Println("check download comment error", err)
 	}
 
-	filePath := []string{}
+	filePaths := []string{}
 	if fileIndex == -1 {
 		fileName := t.Info().Name
 		if t.Info().NameUtf8 != "" {
@@ -239,17 +239,19 @@ func sendDownloadComment(infoHash string, fileIndex int, t *t.Torrent, messageId
 		}
 
 		if t.Info().IsDir() {
-			filePath = append(filePath, filepath.Join(torrent.DownloadDir, fileName))
+			filePaths = append(filePaths, filepath.Join(torrent.DownloadDir, fileName))
 		} else {
 			for _, file := range t.Info().Files {
-				filePath = append(filePath, filepath.Join(torrent.DownloadDir, file.DisplayPath(t.Info())))
+				filePaths = append(filePaths, filepath.Join(torrent.DownloadDir, file.DisplayPath(t.Info())))
 			}
 		}
 	} else {
-		filePath = append(filePath, t.Info().Files[fileIndex].DisplayPath(t.Info()))
+		filePaths = append(filePaths, t.Info().Files[fileIndex].DisplayPath(t.Info()))
 	}
 
-	for _, filePath := range filePath {
+	log.Println("send download comment", filePaths)
+
+	for _, filePath := range filePaths {
 		err := telegram.SendCommentMessage(filePath, int(messageId))
 		if err != nil {
 			log.Println("send download comment error", err)
@@ -257,6 +259,7 @@ func sendDownloadComment(infoHash string, fileIndex int, t *t.Torrent, messageId
 		}
 
 	}
+
 	if err := common.RecordDownloadComment(infoHash, fileIndex); err != nil {
 		log.Println("record download comment error", err)
 		return
