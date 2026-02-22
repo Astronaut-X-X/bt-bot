@@ -210,11 +210,11 @@ Files:
 		log.Println("send download message success", messageId_)
 
 		messageId = int64(messageId_)
-	}
 
-	err := common.RecordDownloadMessage(infoHash, messageId)
-	if err != nil {
-		log.Println("record download message error", err)
+		err = common.RecordDownloadMessage(infoHash, messageId)
+		if err != nil {
+			log.Println("record download message error", err)
+		}
 	}
 
 	log.Println("send download message success", messageId)

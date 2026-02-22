@@ -25,7 +25,7 @@ func RecordDownloadMessage(infoHash string, messageID int64) error {
 		InfoHash:  infoHash,
 		MessageID: messageID,
 	}
-	return database.DB.Save(&downloadMessage).Error
+	return database.DB.Create(&downloadMessage).Error
 }
 
 func CheckDownloadComment(infoHash string, index int) (bool, error) {
