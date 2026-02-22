@@ -20,12 +20,12 @@ import (
 // 文件下载回调处理
 func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	// // 校验下载限制
-	// user, _, err := common.UserAndPermissions(update.CallbackQuery.From.ID)
-	// if err != nil {
-	// 	log.Println("get user and permissions error", err)
-	// 	bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "❌ get user and permissions error"))
-	// 	return
-	// }
+	user, _, err := common.UserAndPermissions(update.CallbackQuery.From.ID)
+	if err != nil {
+		log.Println("get user and permissions error", err)
+		bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "❌ get user and permissions error"))
+		return
+	}
 	// // 并发下载限制
 	// ok, err := common.DecrementDownloadCount(user.Premium)
 	// if !ok {
