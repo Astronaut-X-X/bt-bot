@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"math/rand/v2"
 	"mime"
@@ -265,25 +264,17 @@ func uploadFile(client *Client, path string) (tg.InputFileClass, error) {
 	}
 	defer file.Close()
 
-	limitedReader := &LimitedReaderFile{
-		file:          *file,
-		limitedReader: io.LimitReader(file, 5*1024*1024),
-	}
-
 	// 上传文件
 	up := uploader.NewUploader(client.API())
-	return up.FromFile(context.TODO(), limitedReader)
+	up.WithPartSize(524288 * 2 * 5)
+	up.WithThreads(5)
+	up.WithProgress(&uploadProgress{})
+	return up.FromFile(context.TODO(), file)
 }
 
-type LimitedReaderFile struct {
-	file          os.File
-	limitedReader io.Reader
-}
+type uploadProgress struct{}
 
-func (f *LimitedReaderFile) Read(p []byte) (n int, err error) {
-	return f.limitedReader.Read(p)
-}
-
-func (f *LimitedReaderFile) Stat() (os.FileInfo, error) {
-	return f.file.Stat()
+func (p *uploadProgress) Chunk(ctx context.Context, state uploader.ProgressState) error {
+	log.Println("upload progress:", state.Uploaded, state.Total, state.Part, state.PartSize, state.ID, state.Name)
+	return nil
 }
