@@ -12,7 +12,7 @@ func CheckDownloadMessage(infoHash string) (int64, bool, error) {
 	var downloadMessage model.DownloadFileMessage
 	err := database.DB.Where("info_hash = ?", infoHash).First(&downloadMessage).Error
 	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
-		return -1, true, err
+		return -1, false, err
 	} else if err != nil {
 		return 0, false, err
 	}

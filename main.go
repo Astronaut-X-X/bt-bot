@@ -5,6 +5,7 @@ import (
 
 	"bt-bot/bot"
 	"bt-bot/database"
+	"bt-bot/telegram"
 	"bt-bot/torrent"
 	"bt-bot/utils"
 )
@@ -15,6 +16,9 @@ func main() {
 	if err != nil {
 		log.Fatal("加载配置失败:", err)
 	}
+
+	telegram.LoadGolbalClient()
+	defer telegram.StopAllGlobalClient()
 
 	database.InitDatabase(database.Config{
 		Path:  "database.db",
