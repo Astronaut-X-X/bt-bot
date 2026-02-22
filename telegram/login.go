@@ -8,7 +8,6 @@ import (
 	"github.com/gotd/contrib/bg"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/auth"
-	"github.com/gotd/td/telegram/dcs"
 )
 
 var globalClient *telegram.Client
@@ -20,9 +19,9 @@ func Login(ctx context.Context) {
 	client := telegram.NewClient(AppID, AppHash, telegram.Options{
 		// Logger:         logger,
 		SessionStorage: GetSessionStorage(uuid),
-		Resolver: dcs.Plain(dcs.PlainOptions{
-			Dial: dialer,
-		}),
+		// Resolver: dcs.Plain(dcs.PlainOptions{
+		// 	Dial: dialer,
+		// }),
 	})
 
 	needLogin := !SessionExists(uuid)
