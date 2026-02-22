@@ -229,7 +229,6 @@ func sendDownloadComment(infoHash string, fileIndex int, t *t.Torrent, messageId
 	}
 	if err != nil {
 		log.Println("check download comment error", err)
-		return
 	}
 
 	filePath := []string{}
