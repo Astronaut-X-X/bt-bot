@@ -80,7 +80,7 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 			log.Println("Send magnet processing message error:", err)
 		}
 
-		time.Sleep(3 * time.Second)
+		time.Sleep(1 * time.Second)
 
 		if info != nil || errParse != nil {
 			break
