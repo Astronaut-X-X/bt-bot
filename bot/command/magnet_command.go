@@ -93,6 +93,7 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 		errorMessage = i18n.Replace(errorMessage, map[string]string{
 			i18n.MagnetMessagePlaceholderErrorMessage: errParse.Error(),
 			i18n.MagnetMessagePlaceholderMagnetLink:   magnetLink,
+			i18n.MagnetMessagePlaceholderTimeout:      strconv.Itoa(int(torrent.MagnetTimeout)),
 		})
 		editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, errorMessage)
 		bot.Send(editMsg)

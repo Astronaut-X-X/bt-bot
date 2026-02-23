@@ -11,6 +11,7 @@ const (
 
 	MagnetErrorMessageCode               = "magnet_error_message"
 	MagnetMessagePlaceholderErrorMessage = "{error_message}"
+	MagnetMessagePlaceholderTimeout      = "{timeout}"
 
 	MagnetSuccessMessageCode          = "magnet_success_message"
 	MagnetMessagePlaceholderFileName  = "{file_name}"
@@ -67,7 +68,7 @@ const (
 ⚠️ 可能原因：
 • 网络连接问题
 • 磁力链接无效
-• 超时（3分钟）
+• 超时（{timeout}分钟）
 `
 	MagnetErrorMessageEN = `
 ❌ Parsing failed: 
@@ -78,7 +79,7 @@ const (
 ⚠️ Possible reasons:
 • Network connection problem
 • Invalid magnet link
-• Timeout (3 minutes)
+• Timeout ({timeout} minutes)
 `
 )
 

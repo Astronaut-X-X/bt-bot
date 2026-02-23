@@ -13,6 +13,8 @@ import (
 )
 
 var (
+	MagnetTimeout int = 5
+
 	DownloadDir string = "downloads"
 
 	globalClientMutex sync.Mutex
@@ -75,7 +77,7 @@ func ParseMagnetLink(ctx context.Context, magnet string) (*torrent.Torrent, erro
 	}
 
 	// 等待元信息获取完成（设置超时）
-	timeout := 5 * time.Minute
+	timeout := time.Duration(MagnetTimeout) * time.Minute
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
