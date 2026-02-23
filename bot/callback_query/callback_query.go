@@ -18,6 +18,8 @@ func CallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 		StopCallbackQueryHandler(bot, update)
 	case strings.HasPrefix(data, "info_more_"):
 		MoreCallbackQuery(bot, update)
+	case strings.HasPrefix(data, "stop_magnet_"):
+		StopMagnetCallbackQueryHandler(bot, update)
 	default:
 		return
 	}
