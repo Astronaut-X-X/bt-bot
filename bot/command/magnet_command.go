@@ -64,7 +64,10 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	// 解析中
 	for {
 		elapsedTime := time.Since(startTime)
-		elapsedTimeString := fmt.Sprintf("%02d:%02d:%02d", elapsedTime.Hours(), elapsedTime.Minutes(), elapsedTime.Seconds())
+		hours := int(elapsedTime.Hours())
+		minutes := int(elapsedTime.Minutes()) % 60
+		seconds := int(elapsedTime.Seconds()) % 60
+		elapsedTimeString := fmt.Sprintf("%02d:%02d:%02d", hours, minutes, seconds)
 
 		processingMessage = i18n.Text(i18n.MagnetProcessingMessageCode, user.Language)
 		processingMessage = i18n.Replace(processingMessage, map[string]string{
