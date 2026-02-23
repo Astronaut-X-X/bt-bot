@@ -78,7 +78,7 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 		editMsg.ReplyMarkup = stopMagnetReplyMarkup(infoHash, userID, user.Language)
 		bot.Send(editMsg)
 
-		time.Sleep(1 * time.Second)
+		time.Sleep(3 * time.Second)
 
 		if info != nil || errParse != nil {
 			break
