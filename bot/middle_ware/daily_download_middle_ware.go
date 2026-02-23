@@ -36,6 +36,8 @@ func DailyDownloadMiddleWare(next func(bot *tgbotapi.BotAPI, update *tgbotapi.Up
 			return
 		}
 
+		defer common.DecrementDailyDownloadQuantity(user.Premium)
+
 		next(bot, update)
 	}
 }
