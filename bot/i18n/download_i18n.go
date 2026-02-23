@@ -91,7 +91,7 @@ const (
 	DownloadSuccessMessageZH = `
 ✅ 文件下载成功
 
-🔗 磁力链接: {magnet}
+🔗 磁力链接: #{magnet}
 💾 文件列表：
 {download_files}
 
@@ -101,7 +101,7 @@ const (
 	DownloadSuccessMessageEN = `
 ✅ Download complete
 
-🔗 Magnet: {magnet}
+🔗 Magnet: #{magnet}
 💾 File list:
 {download_files}
 
