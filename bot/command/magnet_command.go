@@ -76,7 +76,9 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 		})
 		editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, processingMessage)
 		editMsg.ReplyMarkup = stopMagnetReplyMarkup(infoHash, userID, user.Language)
-		bot.Send(editMsg)
+		if _, err := bot.Send(editMsg); err != nil {
+			log.Println("Send magnet processing message error:", err)
+		}
 
 		time.Sleep(3 * time.Second)
 
@@ -90,6 +92,7 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 		errorMessage := i18n.Text(i18n.MagnetErrorMessageCode, user.Language)
 		errorMessage = i18n.Replace(errorMessage, map[string]string{
 			i18n.MagnetMessagePlaceholderErrorMessage: errParse.Error(),
+			i18n.MagnetMessagePlaceholderMagnetLink:   magnetLink,
 		})
 		editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, errorMessage)
 		bot.Send(editMsg)
@@ -280,9 +283,11 @@ func emojifyFilename(filename string) string {
 func stopMagnetReplyMarkup(infoHash string, userId int64, language string) *tgbotapi.InlineKeyboardMarkup {
 	data := "stop_magnet_" + infoHash + "_" + strconv.FormatInt(userId, 10)
 
-	return &tgbotapi.InlineKeyboardMarkup{
-		InlineKeyboard: [][]tgbotapi.InlineKeyboardButton{
-			{tgbotapi.NewInlineKeyboardButtonData(i18n.Text(i18n.ButtonStopMagnetCode, language), data)},
+	keyboard := tgbotapi.NewInlineKeyboardMarkup(
+		[]tgbotapi.InlineKeyboardButton{
+			tgbotapi.NewInlineKeyboardButtonData(i18n.Text(i18n.ButtonStopMagnetCode, language), data),
 		},
-	}
+	)
+
+	return &keyboard
 }

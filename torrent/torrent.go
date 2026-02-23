@@ -2,6 +2,7 @@ package torrent
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -84,14 +85,14 @@ func ParseMagnetLink(ctx context.Context, magnet string) (*torrent.Torrent, erro
 	case <-ctx.Done():
 		// 超时，清理 torrent
 		dropOnce()
-		return nil, fmt.Errorf("获取磁力链接元信息超时. Magnet: %s. 等待时长: %v, 错误: %w, 详细错误信息: %+v", magnet, timeout, ctx.Err(), ctx.Err())
+		return nil, err
 	}
 
 	info := t.Info()
 	if info == nil {
 		// Info 为 nil，清理 torrent
 		dropOnce()
-		return nil, fmt.Errorf("无法获取磁力链接元信息，Info为nil. Magnet: %s", magnet)
+		return nil, errors.New("get torrent info failed")
 	}
 
 	// 成功获取信息，返回 torrent 供调用者使用

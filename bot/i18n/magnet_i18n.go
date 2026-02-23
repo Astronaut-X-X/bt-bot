@@ -59,18 +59,22 @@ Current elapsed time: {elapsed_time}
 
 const (
 	MagnetErrorMessageZH = `
-❌ 解析失败: {error_message}
+❌ 解析失败: 
 
-🧲 Magnet link: {magnet_link}
+⚠️ 错误信息: {error_message}
+🧲 磁力链接：{magnet_link}
+
 ⚠️ 可能原因：
 • 网络连接问题
 • 磁力链接无效
 • 超时（3分钟）
 `
 	MagnetErrorMessageEN = `
-❌ Parsing failed: {error_message}
+❌ Parsing failed: 
 
+⚠️ Error: {error_message}
 🧲 Magnet link: {magnet_link}
+
 ⚠️ Possible reasons:
 • Network connection problem
 • Invalid magnet link
