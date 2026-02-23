@@ -24,7 +24,7 @@ var BasicPermissions = Permissions{
 	DailyDownloadQuantity: 10,
 	DailyDownloadRemain:   10,
 	DailyDownloadDate:     1770881636,
-	FileDownloadSize:      1024 * 1024 * 1024 * 1.5,
+	FileDownloadSize:      1024 * 1024 * 1024 * 2,
 }
 
 var PremiumPermissions = Permissions{
