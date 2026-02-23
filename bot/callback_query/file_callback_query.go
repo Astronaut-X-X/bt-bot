@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -262,5 +263,17 @@ func sendDownloadComment(infoHash string, fileIndex int, t *t.Torrent, messageId
 	if err := common.RecordDownloadComment(infoHash, fileIndex); err != nil {
 		log.Println("record download comment error", err)
 		return
+	}
+
+	deleteDownloadFile(filePaths)
+}
+
+func deleteDownloadFile(filePath []string) {
+	for _, filePath := range filePath {
+		err := os.Remove(filePath)
+		if err != nil {
+			log.Println("delete download file error", err)
+			return
+		}
 	}
 }
