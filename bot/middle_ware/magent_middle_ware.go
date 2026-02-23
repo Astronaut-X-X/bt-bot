@@ -19,10 +19,7 @@ func MagnetMiddleWare(next func(bot *tgbotapi.BotAPI, update *tgbotapi.Update)) 
 
 		chatID := common.ParseMessageChatId(update)
 		userId := common.ParseUserId(update)
-		messageText := common.ParseMessageText(update)
-		magnetLink := common.ExtractMagnetLink(messageText)
-		infohash := common.ExtractTorrentInfoHash(magnetLink)
-		cacheKey := fmt.Sprintf("%s-%d", infohash, userId)
+		cacheKey := fmt.Sprintf("%d", userId)
 		user, err := common.User(userId)
 		if err != nil {
 			messageText := i18n.Text(i18n.ErrorCommonMessageCode, user.Language)

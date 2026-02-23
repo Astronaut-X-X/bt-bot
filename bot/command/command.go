@@ -1,6 +1,10 @@
 package command
 
-import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+import (
+	middleware "bt-bot/bot/middle_ware"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+)
 
 const (
 	CommandStart  = "start"
@@ -26,7 +30,7 @@ func CommandHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 		case CommandSelf:
 			SelfCommand(bot, update)
 		case CommandMagnet:
-			MagnetCommand(bot, update)
+			middleware.MagnetMiddleWare(MagnetCommand)(bot, update)
 		}
 	}
 }
