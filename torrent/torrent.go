@@ -85,7 +85,7 @@ func ParseMagnetLink(ctx context.Context, magnet string) (*torrent.Torrent, erro
 	case <-ctx.Done():
 		// 超时，清理 torrent
 		dropOnce()
-		return nil, err
+		return nil, ctx.Err()
 	}
 
 	info := t.Info()
