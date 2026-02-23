@@ -4,8 +4,8 @@ const (
 	MagnetInvalidLinkMessageCode       = "magnet_invalid_link_message"
 	MagnetMessagePlaceholderMagnetLink = "{magnet_link}"
 
-	MagnetProcessingMessageCode               = "magnet_processing_message"
-	MagnetMessagePlaceholderProcessingMessage = ""
+	MagnetProcessingMessageCode         = "magnet_processing_message"
+	MagnetMessagePlaceholderElapsedTime = "{elapsed_time}"
 
 	MagnetErrorMessageCode               = "magnet_error_message"
 	MagnetMessagePlaceholderErrorMessage = "{error_message}"
@@ -20,12 +20,14 @@ const (
 const (
 	MagnetInvalidLinkMessageZH = `
 ❌ 磁力链接格式错误。
-磁力链接：{magnet_link}
+
+🧲 磁力链接：{magnet_link}
 请发送磁力链接或使用命令：/magnet <磁力链接>
 `
 	MagnetInvalidLinkMessageEN = `
 ❌ No valid magnet link found.
-Magnet link: {magnet_link}
+
+🧲 Magnet link: {magnet_link}
 Please send a magnet link or use the command: /magnet <magnet link>
 `
 )
@@ -33,23 +35,36 @@ Please send a magnet link or use the command: /magnet <magnet link>
 const (
 	MagnetProcessingMessageZH = `
 ⏳ 正在解析磁力链接，请稍候...
+
+🧲 磁力链接：{magnet_link}
+⏱️ 当前耗时：{elapsed_time}
 `
 	MagnetProcessingMessageEN = `
 ⏳ Parsing magnet link, please wait...
+
+🧲 Magnet link: {magnet_link}
+⏱️ Current elapsed time: {elapsed_time}
+
+🧲 Magnet link: {magnet_link}
+Current elapsed time: {elapsed_time}
 `
 )
 
 const (
 	MagnetErrorMessageZH = `
 ❌ 解析失败: {error_message}
-可能的原因：
+
+🧲 Magnet link: {magnet_link}
+⚠️ 可能原因：
 • 网络连接问题
 • 磁力链接无效
 • 超时（3分钟）
 `
 	MagnetErrorMessageEN = `
 ❌ Parsing failed: {error_message}
-Possible reasons:
+
+🧲 Magnet link: {magnet_link}
+⚠️ Possible reasons:
 • Network connection problem
 • Invalid magnet link
 • Timeout (3 minutes)

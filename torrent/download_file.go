@@ -32,7 +32,7 @@ func Download(params DownloadParams) {
 	magnetLink := fmt.Sprintf("magnet:?xt=urn:btih:%s", params.InfoHash)
 
 	// 解析磁力链接，获取 Torrent 句柄
-	t, err := ParseMagnetLink(magnetLink)
+	t, err := ParseMagnetLink(context.Background(), magnetLink)
 	if err != nil {
 		log.Println("parse magnet link error", err)
 		return

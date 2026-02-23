@@ -258,7 +258,6 @@ func sendDownloadComment(infoHash string, fileIndex int, t *t.Torrent, messageId
 			log.Println("send download comment error", err)
 			return
 		}
-
 	}
 
 	if err := common.RecordDownloadComment(infoHash, fileIndex); err != nil {

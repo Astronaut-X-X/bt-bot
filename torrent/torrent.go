@@ -50,7 +50,7 @@ func CloseTorrentClient() error {
 	return nil
 }
 
-func ParseMagnetLink(magnet string) (*torrent.Torrent, error) {
+func ParseMagnetLink(ctx context.Context, magnet string) (*torrent.Torrent, error) {
 
 	t, err := globalClient.AddMagnet(magnet)
 	if err != nil {
@@ -74,8 +74,8 @@ func ParseMagnetLink(magnet string) (*torrent.Torrent, error) {
 	}
 
 	// 等待元信息获取完成（设置超时）
-	timeout := 3 * time.Minute
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	timeout := 5 * time.Minute
+	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	select {

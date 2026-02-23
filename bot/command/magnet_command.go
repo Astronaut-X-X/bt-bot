@@ -6,10 +6,12 @@ import (
 	"bt-bot/database/model"
 	"bt-bot/torrent"
 	"bt-bot/utils"
+	"context"
 	"fmt"
 	"log"
 	"strconv"
 	"strings"
+	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -35,17 +37,55 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 		bot.Send(reply)
 		return
 	}
+	infoHash := torrent.ExtractTorrentInfoHash(magnetLink)
+
+	startTime := time.Now()
 
 	// 发送解析中消息
 	processingMessage := i18n.Text(i18n.MagnetProcessingMessageCode, user.Language)
+	processingMessage = i18n.Replace(processingMessage, map[string]string{
+		i18n.MagnetMessagePlaceholderMagnetLink:  magnetLink,
+		i18n.MagnetMessagePlaceholderElapsedTime: "--:--:--",
+	})
 	processingMsg := tgbotapi.NewMessage(chatID, processingMessage)
 	sentMsg, _ := bot.Send(processingMsg)
 
-	info, err := parseMagnetLink(magnetLink)
-	if err != nil {
+	ctx, cancel := context.WithCancel(context.Background())
+	torrent.SetTorrentCancel(infoHash, userID, cancel)
+	defer torrent.RemoveTorrentCancel(infoHash, userID)
+
+	var info *model.Torrent
+	var errParse error
+	go func() {
+		info, errParse = parseMagnetLink(ctx, magnetLink)
+	}()
+
+	// 解析中
+	for {
+		elapsedTime := time.Since(startTime)
+		elapsedTimeString := fmt.Sprintf("%02d:%02d:%02d", elapsedTime.Hours(), elapsedTime.Minutes(), elapsedTime.Seconds())
+
+		processingMessage = i18n.Text(i18n.MagnetProcessingMessageCode, user.Language)
+		processingMessage = i18n.Replace(processingMessage, map[string]string{
+			i18n.MagnetMessagePlaceholderMagnetLink:  magnetLink,
+			i18n.MagnetMessagePlaceholderElapsedTime: elapsedTimeString,
+		})
+		editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, processingMessage)
+		editMsg.ReplyMarkup = stopMagnetReplyMarkup(infoHash, userID, user.Language)
+		bot.Send(editMsg)
+
+		time.Sleep(1 * time.Second)
+
+		if info != nil || errParse != nil {
+			break
+		}
+	}
+
+	// 解析失败
+	if errParse != nil {
 		errorMessage := i18n.Text(i18n.MagnetErrorMessageCode, user.Language)
 		errorMessage = i18n.Replace(errorMessage, map[string]string{
-			i18n.MagnetMessagePlaceholderErrorMessage: err.Error(),
+			i18n.MagnetMessagePlaceholderErrorMessage: errParse.Error(),
 		})
 		editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, errorMessage)
 		bot.Send(editMsg)
@@ -68,7 +108,7 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 }
 
 // parse magnet link to info
-func parseMagnetLink(magnetLink string) (*model.Torrent, error) {
+func parseMagnetLink(ctx context.Context, magnetLink string) (*model.Torrent, error) {
 	var info_ model.Torrent
 
 	infoHash := torrent.ExtractTorrentInfoHash(magnetLink)
@@ -81,17 +121,15 @@ func parseMagnetLink(magnetLink string) (*model.Torrent, error) {
 		info_ = *dbInfo
 	} else {
 		// 提取 InfoHash
-		info, err := torrent.ParseMagnetLink(magnetLink)
+		info, err := torrent.ParseMagnetLink(ctx, magnetLink)
 		if err != nil {
 			return nil, err
 		}
 		defer func() {
+			if r := recover(); r != nil {
+				log.Println("Drop torrent failed: ", r)
+			}
 			if info != nil {
-				defer func() {
-					if r := recover(); r != nil {
-						log.Println("Drop torrent failed: ", r)
-					}
-				}()
 				info.Drop()
 			}
 		}()
@@ -232,5 +270,15 @@ func emojifyFilename(filename string) string {
 		return emoji
 	} else {
 		return "📄"
+	}
+}
+
+func stopMagnetReplyMarkup(infoHash string, userId int64, language string) *tgbotapi.InlineKeyboardMarkup {
+	data := "stop_magnet_" + infoHash + "_" + strconv.FormatInt(userId, 10)
+
+	return &tgbotapi.InlineKeyboardMarkup{
+		InlineKeyboard: [][]tgbotapi.InlineKeyboardButton{
+			{tgbotapi.NewInlineKeyboardButtonData(i18n.Text(i18n.ButtonStopMagnetCode, language), data)},
+		},
 	}
 }
