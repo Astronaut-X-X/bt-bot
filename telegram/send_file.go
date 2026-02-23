@@ -280,3 +280,40 @@ func (p *uploadProgress) Chunk(ctx context.Context, state uploader.ProgressState
 	log.Println("upload progress:", state.Uploaded, state.Total, state.Part, state.PartSize, state.ID, state.Name)
 	return nil
 }
+
+func SendCommentMessageText(text string, msgId int) error {
+	client := GetIdleGlobalClient()
+	if client == nil {
+		log.Println("no idle client")
+		return errors.New("no idle client")
+	}
+
+	channelId, accessHash, err := getInputPeerChannel(client)
+	if err != nil {
+		log.Println("failed to get channel:", err)
+		return err
+	}
+
+	commonetInputPeerChannel, err := getCommonetInputPeerChannel(client, channelId, accessHash)
+	if err != nil {
+		log.Println("failed to get commonet input peer channel:", err)
+		return err
+	}
+
+	sendMsg := &tg.MessagesSendMessageRequest{
+		Peer:     commonetInputPeerChannel,
+		RandomID: rand.Int64(),
+		ReplyTo: &tg.InputReplyToMessage{
+			TopMsgID:     msgId,
+			ReplyToMsgID: msgId,
+		},
+		Message: text,
+	}
+
+	if _, err = client.API().MessagesSendMessage(context.TODO(), sendMsg); err != nil {
+		log.Println("failed to send message:", err)
+		return err
+	}
+
+	return nil
+}

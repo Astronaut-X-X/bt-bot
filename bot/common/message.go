@@ -18,3 +18,11 @@ func ParseMessageChatId(update *tgbotapi.Update) int64 {
 	}
 	return message.Chat.ID
 }
+
+func ParseCallbackQueryChatId(update *tgbotapi.Update) int64 {
+	callbackQuery := update.CallbackQuery
+	if callbackQuery == nil {
+		return 0
+	}
+	return callbackQuery.Message.Chat.ID
+}

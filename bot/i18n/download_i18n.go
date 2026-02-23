@@ -1,6 +1,10 @@
 package i18n
 
 const (
+	DownloadAlreadyDownloadingMessageCode          = "download_already_downloading_message"
+	DownloadDailyDownloadCountNotEnoughMessageCode = "download_daily_download_count_not_enough_message"
+	DownloadFileDownloadSizeNotEnoughMessageCode   = "download_file_download_size_not_enough_message"
+
 	DownloadStartMessageCode      = "download_start_message"
 	DownloadProcessingMessageCode = "download_processing_message"
 	DownloadSuccessMessageCode    = "download_success_message"
@@ -13,6 +17,21 @@ const (
 	DownloadMessagePlaceholderBytesCompleted  = "{bytes_completed}"
 	DownloadMessagePlaceholderTotalBytes      = "{total_bytes}"
 	DownloadMessagePlaceholderDownloadChannel = "{download_channel}"
+)
+
+const (
+	DownloadAlreadyDownloadingMessageZH = "❌ 已经有一个在下载了，请稍后再试"
+	DownloadAlreadyDownloadingMessageEN = "❌ Already downloading, please try again later"
+)
+
+const (
+	DownloadDailyDownloadCountNotEnoughMessageZH = "❌ 每日下载数量不足，请明天再试"
+	DownloadDailyDownloadCountNotEnoughMessageEN = "❌ Daily download count not enough, please try again tomorrow"
+)
+
+const (
+	DownloadFileDownloadSizeNotEnoughMessageZH = "❌ 文件下载大小超过限制"
+	DownloadFileDownloadSizeNotEnoughMessageEN = "❌ File download size exceeds the limit"
 )
 
 const (

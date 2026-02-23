@@ -40,6 +40,17 @@ func ParseUserId(update *tgbotapi.Update) int64 {
 	return msg.From.ID
 }
 
+func ParseCallbackQueryUserId(update *tgbotapi.Update) int64 {
+	callbackQuery := update.CallbackQuery
+	if callbackQuery == nil {
+		return 0
+	}
+	if callbackQuery.From == nil {
+		return 0
+	}
+	return callbackQuery.From.ID
+}
+
 func User(userID int64) (*model.User, error) {
 	uuid, ok, err := userUUID(userID)
 	if !ok {
@@ -152,60 +163,30 @@ func CreateUserPermissions(userID int64) (*model.User, *model.Permissions, error
 	return &user, &permissions, nil
 }
 
-// 减少用户可下载文件数
-func DecrementDownloadCount(premium string) (bool, error) {
+// 剩余每日下载数量
+func RemainDailyDownloadQuantity(premium string) (int, error) {
+	// 获取用户权限信息
 	permissions, err := permissions(premium)
 	if err != nil {
-		return false, err
+		return 0, err
 	}
 
-	if permissions.AsyncDownloadRemain <= 0 {
-		return false, errors.New("下载数量不足")
-	}
-
-	permissions.AsyncDownloadRemain = permissions.AsyncDownloadRemain - 1
-	if err = SetPermissions(premium, permissions); err != nil {
-		return false, err
-	}
-
-	return true, nil
-}
-
-// 下载完成后恢复可下载文件数
-func IncrementDownloadCount(premium string) error {
-	permissions, err := permissions(premium)
-	if err != nil {
-		return err
-	}
-
-	permissions.AsyncDownloadRemain = min(permissions.AsyncDownloadRemain+1, permissions.AsyncDownloadQuantity)
-	if err = SetPermissions(premium, permissions); err != nil {
-		return err
-	}
-	return nil
-}
-
-func RemainDailyDownload(premium string) (bool, error) {
-	permissions, err := permissions(premium)
-	if err != nil {
-		return false, err
-	}
-
+	// 取出上次记录的每日下载日期
 	date := time.Unix(permissions.DailyDownloadDate, 0)
+	// 如果不是今天，重置每日下载次数和日期
 	if !date.Equal(time.Now().Truncate(24 * time.Hour)) {
-		permissions.DailyDownloadRemain = permissions.DailyDownloadQuantity
-		permissions.DailyDownloadDate = time.Now().Truncate(24 * time.Hour).Unix()
-		if err = SetPermissions(premium, permissions); err != nil {
-			return false, err
+		permissions.DailyDownloadRemain = permissions.DailyDownloadQuantity        // 重置剩余下载次数为每日最大下载数
+		permissions.DailyDownloadDate = time.Now().Truncate(24 * time.Hour).Unix() // 更新为今天的日期
+		if err = setPermissions(premium, permissions); err != nil {
+			return 0, err
 		}
 	}
 
-	if permissions.DailyDownloadRemain <= 0 {
-		return false, nil
-	}
-	return true, nil
+	// 返回今天剩余的下载次数
+	return permissions.DailyDownloadRemain, nil
 }
 
+// 减少每日下载数量
 func DecrementDailyDownloadQuantity(premium string) error {
 	permissions, err := permissions(premium)
 	if err != nil {
@@ -213,7 +194,7 @@ func DecrementDailyDownloadQuantity(premium string) error {
 	}
 
 	permissions.DailyDownloadRemain = min(permissions.DailyDownloadRemain-1, 0)
-	if err = SetPermissions(premium, permissions); err != nil {
+	if err = setPermissions(premium, permissions); err != nil {
 		return err
 	}
 	return nil
@@ -223,7 +204,8 @@ var (
 	SetPermissionsLock sync.Mutex
 )
 
-func SetPermissions(premium string, permissions *model.Permissions) error {
+// 设置权限
+func setPermissions(premium string, permissions *model.Permissions) error {
 	SetPermissionsLock.Lock()
 	defer SetPermissionsLock.Unlock()
 	return database.DB.Save(permissions).Error

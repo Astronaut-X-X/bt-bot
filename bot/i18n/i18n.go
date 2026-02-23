@@ -30,6 +30,10 @@ func init() {
 		MagnetSuccessMessageCode:        MagnetSuccessMessageZH,
 
 		// Download
+		DownloadAlreadyDownloadingMessageCode:          DownloadAlreadyDownloadingMessageZH,
+		DownloadDailyDownloadCountNotEnoughMessageCode: DownloadDailyDownloadCountNotEnoughMessageZH,
+		DownloadFileDownloadSizeNotEnoughMessageCode:   DownloadFileDownloadSizeNotEnoughMessageZH,
+
 		DownloadStartMessageCode:      DownloadStartMesssageZH,
 		DownloadProcessingMessageCode: DownloadProcessingMessageZH,
 		DownloadSuccessMessageCode:    DownloadSuccessMessageZH,
@@ -56,6 +60,10 @@ func init() {
 		MagnetSuccessMessageCode:        MagnetSuccessMessageEN,
 
 		// Download
+		DownloadAlreadyDownloadingMessageCode:          DownloadAlreadyDownloadingMessageEN,
+		DownloadDailyDownloadCountNotEnoughMessageCode: DownloadDailyDownloadCountNotEnoughMessageEN,
+		DownloadFileDownloadSizeNotEnoughMessageCode:   DownloadFileDownloadSizeNotEnoughMessageEN,
+
 		DownloadStartMessageCode:      DownloadStartMesssageEN,
 		DownloadProcessingMessageCode: DownloadProcessingMessageEN,
 		DownloadSuccessMessageCode:    DownloadSuccessMessageEN,

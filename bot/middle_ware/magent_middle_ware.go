@@ -23,12 +23,7 @@ func MagnetMiddleWare(next func(bot *tgbotapi.BotAPI, update *tgbotapi.Update)) 
 		cacheKey := fmt.Sprintf("%d", userId)
 		user, err := common.User(userId)
 		if err != nil {
-			messageText := i18n.Text(i18n.ErrorCommonMessageCode, user.Language)
-			messageText = i18n.Replace(messageText, map[string]string{
-				i18n.ErrorMessagePlaceholderErrorMessage: err.Error(),
-			})
-			reply := tgbotapi.NewMessage(chatID, messageText)
-			bot.Send(reply)
+			common.SendErrorMessage(bot, chatID, user.Language, err)
 			return
 		}
 

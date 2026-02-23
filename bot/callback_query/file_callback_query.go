@@ -19,64 +19,61 @@ import (
 
 // 文件下载回调处理
 func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
+
+	// 解析用户ID和聊天ID
+	userId := common.ParseCallbackQueryUserId(update)
+	chatID := common.ParseCallbackQueryChatId(update)
+
 	// // 校验下载限制
-	user, err := common.User(update.CallbackQuery.From.ID)
+	user, err := common.User(userId)
 	if err != nil {
-		common.SendErrorMessage(bot, update.CallbackQuery.Message.Chat.ID, user.Language, err)
+		common.SendErrorMessage(bot, chatID, user.Language, err)
 		return
 	}
-	// // 并发下载限制
-	// ok, err := common.DecrementDownloadCount(user.Premium)
-	// if !ok {
-	// 	log.Println("download count not enough")
-	// 	bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "❌ download count not enough"))
-	// 	return
-	// }
-	// if err != nil {
-	// 	log.Println("decrement download count error", err)
-	// 	bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "❌ decrement download count error"))
-	// 	return
-	// }
-	// defer common.IncrementDownloadCount(user.Premium)
 
-	// // 每日下载限制
-	// ok, err = common.RemainDailyDownload(user.Premium)
-	// if !ok {
-	// 	log.Println("daily download count not enough")
-	// 	bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "❌ daily download count not enough"))
-	// 	return
-	// }
-	// if err != nil {
-	// 	log.Println("remain daily download error", err)
-	// 	bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "❌ remain daily download error"))
-	// 	return
-	// }
-	// defer common.DecrementDailyDownloadQuantity(user.Premium)
+	permissions, err := common.Permissions(userId)
+	if err != nil {
+		common.SendErrorMessage(bot, chatID, user.Language, err)
+		return
+	}
 
+	// 解析下载数据
 	data := update.CallbackQuery.Data
 	infoHash, fileIndex, err := parseFileCallbackQueryData(data)
 	if err != nil {
 		log.Println("parse file callback query data error", err)
-		bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "❌ invalid download file data"))
+		bot.Send(tgbotapi.NewMessage(chatID, "❌ invalid download file data"))
 		return
 	}
 
 	// 文件下载大小限制
 	// TODO
+	torrentInfo, err := common.GetTorrentInfo(infoHash)
+	if err != nil {
+		log.Println("get torrent info error", err)
+		common.SendErrorMessage(bot, chatID, user.Language, err)
+		return
+	}
+	if fileIndex == -1 && torrentInfo.TotalLength() > permissions.FileDownloadSize ||
+		fileIndex != -1 && torrentInfo.Files[fileIndex].Length > permissions.FileDownloadSize {
+		messageText := i18n.Text(i18n.DownloadFileDownloadSizeNotEnoughMessageCode, user.Language)
+		reply := tgbotapi.NewMessage(chatID, messageText)
+		bot.Send(reply)
+		return
+	}
 
+	// 发送开始下载消息
 	startMessage := i18n.Text(i18n.DownloadStartMessageCode, user.Language)
 	startMessage = i18n.Replace(startMessage, map[string]string{
 		i18n.DownloadMessagePlaceholderMagnet: infoHash,
 	})
-	newMessage := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, startMessage)
+	newMessage := tgbotapi.NewMessage(chatID, startMessage)
 	newMessage.ReplyMarkup = stopDownloadReplyMarkup(infoHash, fileIndex, user.Language)
 	message, err := bot.Send(newMessage)
 	if err != nil {
 		log.Println("send start message error", err)
 		return
 	}
-
-	chatID := message.Chat.ID
 	messageID := message.MessageID
 
 	log.Println("download file", infoHash, fileIndex)
@@ -122,10 +119,10 @@ func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 
 	// 下载成功
 	successCallback := func(t *t.Torrent) {
-
 		// 发送下载消息
 		sendDownloadMessage(infoHash, fileIndex, t)
 
+		// 发送下载成功消息
 		message := i18n.Text(i18n.DownloadSuccessMessageCode, user.Language)
 		message = i18n.Replace(message, map[string]string{
 			i18n.DownloadMessagePlaceholderMagnet:          infoHash,
@@ -186,28 +183,16 @@ func sendDownloadMessage(infoHash string, fileIndex int, t *t.Torrent) {
 	if !ok {
 		messageText := `
 #{info_hash}
-
-Magnet: {magnet}
-Files:
-{files}
+🔗 Magnet: {magnet}
 		`
 		messageText = strings.ReplaceAll(messageText, "{info_hash}", infoHash)
 		messageText = strings.ReplaceAll(messageText, "{magnet}", "magnet:?xt=urn:btih:"+infoHash)
-		files := t.Info().Files
-		filesText := ""
-		for _, file := range files {
-			filesText += fmt.Sprintf("%s (%s)\n", file.DisplayPath(t.Info()), utils.FormatBytesToSizeString(file.Length))
-		}
-		messageText = strings.ReplaceAll(messageText, "{files}", filesText)
 
 		messageId_, err := telegram.SendChannelMessage(messageText)
 		if err != nil {
 			log.Println("send download message error", err)
 			return
 		}
-
-		log.Println("send download message success", messageId_)
-
 		messageId = int64(messageId_)
 
 		err = common.RecordDownloadMessage(infoHash, messageId)
@@ -216,8 +201,15 @@ Files:
 		}
 	}
 
-	log.Println("send download message success", messageId)
+	// 发送下载文件列表
+	files := t.Info().Files
+	filesText := ""
+	for index, file := range files {
+		filesText += fmt.Sprintf("%d. %s (%s)\n", index+1, file.DisplayPath(t.Info()), utils.FormatBytesToSizeString(file.Length))
+	}
+	telegram.SendCommentMessageText(filesText, int(messageId))
 
+	// 发送下载文件评论
 	sendDownloadComment(infoHash, fileIndex, t, messageId)
 }
 
