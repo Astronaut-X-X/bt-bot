@@ -17,7 +17,7 @@ const (
 你好，{bot_user_name}！👋
 
 唯一标识: 
-<code>{uuid}</code>
+{uuid}
 ⚠️ 请保管好唯一标识，不要泄露给他人
 
 使用语言: {language}
@@ -35,7 +35,7 @@ const (
 Hello, {bot_user_name}! 👋
 
 Unique identifier: 
-<code>{uuid}</code>
+{uuid}
 ⚠️ Please keep the unique identifier safe, do not leak to others
 
 Using language: {language}
