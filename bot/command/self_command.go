@@ -11,18 +11,26 @@ import (
 )
 
 func SelfCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
-	msg := update.Message
+	userId := common.ParseUserId(update)
+	chatID := common.ParseMessageChatId(update)
+	userName := common.ParseFullName(update)
 
-	chatID := msg.Chat.ID
-	userName := common.FullName(msg.From)
-
-	user, permissions, err := common.UserAndPermissions(msg.From.ID)
+	// 获取用户信息
+	user, err := common.User(userId)
 	if err != nil {
-		log.Println("UserAndPermissions error:", err)
+		common.SendErrorMessage(bot, chatID, user.Language, err)
 		return
 	}
 
-	message := i18n.Replace(i18n.Text("self_message", user.Language), map[string]string{
+	// 获取用户权限
+	permissions, err := common.Permissions(userId)
+	if err != nil {
+		common.SendErrorMessage(bot, chatID, user.Language, err)
+		return
+	}
+
+	// 生成个人消息
+	message := i18n.Replace(i18n.Text(i18n.SelfMessageCode, user.Language), map[string]string{
 		i18n.SelfMessagePlaceholderUserName:              userName,
 		i18n.SelfMessagePlaceholderUUID:                  user.UUID,
 		i18n.SelfMessagePlaceholderLanguage:              user.Language,
@@ -32,6 +40,11 @@ func SelfCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 		i18n.SelfMessagePlaceholderFileDownloadSize:      utils.FormatBytesToSizeString(permissions.FileDownloadSize),
 	})
 
+	// 创建个人消息
 	reply := tgbotapi.NewMessage(chatID, message)
-	bot.Send(reply)
+
+	// 发送个人消息
+	if _, err := bot.Send(reply); err != nil {
+		log.Println("Send self message error:", err)
+	}
 }

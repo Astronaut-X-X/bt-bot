@@ -21,8 +21,9 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	chatID := msg.Chat.ID
 	userID := msg.From.ID
 
-	user, _, err := common.UserAndPermissions(userID)
+	user, err := common.User(userID)
 	if err != nil {
+		common.SendErrorMessage(bot, chatID, user.Language, err)
 		return
 	}
 

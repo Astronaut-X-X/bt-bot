@@ -9,17 +9,17 @@ import (
 )
 
 func StartCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
-	msg := update.Message
-	chatID := msg.Chat.ID
+	userId := common.ParseUserId(update)
+	chatID := common.ParseMessageChatId(update)
+	userName := common.ParseFullName(update)
 
-	userName := common.FullName(msg.From)
-	user, _, err := common.UserAndPermissions(msg.From.ID)
+	user, err := common.User(userId)
 	if err != nil {
-		log.Println("UserAndPermissions error:", err)
+		common.SendErrorMessage(bot, chatID, user.Language, err)
 		return
 	}
 
-	message := i18n.Replace(i18n.Text("start_message", user.Language), map[string]string{
+	message := i18n.Replace(i18n.Text(i18n.StartMessageCode, user.Language), map[string]string{
 		i18n.StartMessagePlaceholderUserName:        userName,
 		i18n.StartMessagePlaceholderDownloadChannel: "@tgqpXOZ2tzXN",
 		i18n.StartMessagePlaceholderHelpChannel:     "@bt1bot1channel",
@@ -28,7 +28,9 @@ func StartCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	reply := tgbotapi.NewMessage(chatID, message)
 	reply.ReplyMarkup = startReplyMarkup()
 
-	bot.Send(reply)
+	if _, err := bot.Send(reply); err != nil {
+		log.Println("Send start message error:", err)
+	}
 }
 
 func startReplyMarkup() *tgbotapi.InlineKeyboardMarkup {

@@ -9,19 +9,27 @@ import (
 )
 
 func HelpCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
-	chatID := update.Message.Chat.ID
+	userId := common.ParseUserId(update)
+	chatID := common.ParseMessageChatId(update)
 
-	user, _, err := common.UserAndPermissions(update.Message.From.ID)
+	// 获取用户信息
+	user, err := common.User(userId)
 	if err != nil {
-		log.Println("UserAndPermissions error:", err)
+		common.SendErrorMessage(bot, chatID, user.Language, err)
 		return
 	}
 
-	message := i18n.Replace(i18n.Text("help_message", user.Language), map[string]string{
+	// 生成帮助消息
+	message := i18n.Replace(i18n.Text(i18n.HelpMessageCode, user.Language), map[string]string{
 		i18n.HelpMessagePlaceholderDownloadChannel: "@tgqpXOZ2tzXN",
 		i18n.HelpMessagePlaceholderHelpChannel:     "@bt1bot1channel",
 	})
 
+	// 创建帮助消息
 	reply := tgbotapi.NewMessage(chatID, message)
-	bot.Send(reply)
+
+	// 发送帮助消息
+	if _, err := bot.Send(reply); err != nil {
+		log.Println("Send help message error:", err)
+	}
 }

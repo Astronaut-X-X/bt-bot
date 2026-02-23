@@ -1,6 +1,8 @@
 package i18n
 
 const (
+	SelfMessageCode = "self_message"
+
 	SelfMessagePlaceholderUserName              = "{bot_user_name}"
 	SelfMessagePlaceholderUUID                  = "{uuid}"
 	SelfMessagePlaceholderLanguage              = "{language}"
@@ -14,11 +16,11 @@ const (
 	SelfMessageZH = `
 你好，{bot_user_name}！👋
 
-个人消息：
-使用语言: {language}
-唯一标识: {uuid} 
+唯一标识: 
+<code>{uuid}</code>
 ⚠️ 请保管好唯一标识，不要泄露给他人
 
+使用语言: {language}
 
 使用限制：
 - 剩余每日下载数量：{daily_download_remain}
@@ -32,10 +34,11 @@ const (
 	SelfMessageEN = `
 Hello, {bot_user_name}! 👋
 
-Personal message:
-Using language: {language}
-Unique identifier: {uuid}
+Unique identifier: 
+<code>{uuid}</code>
 ⚠️ Please keep the unique identifier safe, do not leak to others
+
+Using language: {language}
 
 Usage limit:
 - Remaining daily download quantity: {daily_download_remain}

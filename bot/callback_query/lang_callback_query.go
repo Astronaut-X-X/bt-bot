@@ -4,6 +4,7 @@ import (
 	"bt-bot/bot/common"
 	"bt-bot/bot/i18n"
 	"bt-bot/database"
+	"log"
 	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -12,17 +13,17 @@ import (
 func LangCallbackQueryHandler(bot *tgbotapi.BotAPI, udpate *tgbotapi.Update) {
 	data := udpate.CallbackQuery.Data
 
-	lang := strings.TrimPrefix(data, "lang_")
-
-	user, _, err := common.UserAndPermissions(udpate.CallbackQuery.From.ID)
+	username := common.ParseCallbackQueryFullName(udpate)
+	user, err := common.User(udpate.CallbackQuery.From.ID)
 	if err != nil {
+		common.SendErrorMessage(bot, udpate.CallbackQuery.Message.Chat.ID, user.Language, err)
 		return
 	}
 
-	username := common.FullName(udpate.CallbackQuery.From)
-	user.Language = lang
+	user.Language = strings.TrimPrefix(data, "lang_")
 	err = database.DB.Save(&user).Error
 	if err != nil {
+		common.SendErrorMessage(bot, udpate.CallbackQuery.Message.Chat.ID, user.Language, err)
 		return
 	}
 
@@ -35,7 +36,9 @@ func LangCallbackQueryHandler(bot *tgbotapi.BotAPI, udpate *tgbotapi.Update) {
 	message := tgbotapi.NewEditMessageText(udpate.CallbackQuery.Message.Chat.ID, udpate.CallbackQuery.Message.MessageID, text)
 	message.ReplyMarkup = startReplyMarkup()
 
-	bot.Send(message)
+	if _, err := bot.Send(message); err != nil {
+		log.Println("Send lang callback query message error:", err)
+	}
 }
 
 func startReplyMarkup() *tgbotapi.InlineKeyboardMarkup {

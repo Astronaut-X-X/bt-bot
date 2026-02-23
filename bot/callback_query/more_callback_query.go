@@ -17,7 +17,7 @@ import (
 
 func MoreCallbackQuery(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	// // 校验下载限制
-	user, _, err := common.UserAndPermissions(update.CallbackQuery.From.ID)
+	user, err := common.User(update.CallbackQuery.From.ID)
 	if err != nil {
 		log.Println("get user and permissions error", err)
 		bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "❌ get user and permissions error"))

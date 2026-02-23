@@ -14,16 +14,20 @@ var (
 
 func init() {
 	ZH_MAP = map[string]string{
+		// Error
+		ErrorCommonMessageCode: ErrorCommonMessageZH,
+
 		// Command
-		"start_message": StartMessageZH,
-		"self_message":  SelfMessageZH,
-		"help_message":  HelpMessageZH,
+		StartMessageCode: StartMessageZH,
+		SelfMessageCode:  SelfMessageZH,
+		HelpMessageCode:  HelpMessageZH,
 
 		// Magnet
-		MagnetInvalidLinkMessageCode: MagnetInvalidLinkMessageZH,
-		MagnetProcessingMessageCode:  MagnetProcessingMessageZH,
-		MagnetErrorMessageCode:       MagnetErrorMessageZH,
-		MagnetSuccessMessageCode:     MagnetSuccessMessageZH,
+		MagnetAlreadyParsingMessageCode: MagnetAlreadyParsingMessageZH,
+		MagnetInvalidLinkMessageCode:    MagnetInvalidLinkMessageZH,
+		MagnetProcessingMessageCode:     MagnetProcessingMessageZH,
+		MagnetErrorMessageCode:          MagnetErrorMessageZH,
+		MagnetSuccessMessageCode:        MagnetSuccessMessageZH,
 
 		// Download
 		DownloadStartMessageCode:      DownloadStartMesssageZH,
@@ -35,16 +39,20 @@ func init() {
 		ButtonStopDownloadCode: ButtonStopDownloadZH,
 	}
 	EN_MAP = map[string]string{
+		// Error
+		ErrorCommonMessageCode: ErrorCommonMessageEN,
+
 		// Command
-		"start_message": StartMessageEN,
-		"self_message":  SelfMessageEN,
-		"help_message":  HelpMessageEN,
+		StartMessageCode: StartMessageEN,
+		SelfMessageCode:  SelfMessageEN,
+		HelpMessageCode:  HelpMessageEN,
 
 		// Magnet
-		MagnetInvalidLinkMessageCode: MagnetInvalidLinkMessageEN,
-		MagnetProcessingMessageCode:  MagnetProcessingMessageEN,
-		MagnetErrorMessageCode:       MagnetErrorMessageEN,
-		MagnetSuccessMessageCode:     MagnetSuccessMessageEN,
+		MagnetAlreadyParsingMessageCode: MagnetAlreadyParsingMessageEN,
+		MagnetInvalidLinkMessageCode:    MagnetInvalidLinkMessageEN,
+		MagnetProcessingMessageCode:     MagnetProcessingMessageEN,
+		MagnetErrorMessageCode:          MagnetErrorMessageEN,
+		MagnetSuccessMessageCode:        MagnetSuccessMessageEN,
 
 		// Download
 		DownloadStartMessageCode:      DownloadStartMesssageEN,

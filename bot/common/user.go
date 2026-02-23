@@ -16,41 +16,78 @@ import (
 	"gorm.io/gorm"
 )
 
-func FullName(user *tgbotapi.User) string {
+func ParseFullName(update *tgbotapi.Update) string {
+	user := update.Message.From
 	if user.LastName == "" {
 		return fmt.Sprintf("%s %s", user.FirstName, user.LastName)
 	}
 	return user.FirstName
 }
 
-func UserAndPermissions(userID int64) (*model.User, *model.Permissions, error) {
-	uuid, ok, err := GetUserUUID(userID)
-	if !ok {
-		user, permissions, err := CreateUser(userID)
-		if err != nil {
-			return nil, nil, err
-		}
-		return user, permissions, nil
+func ParseCallbackQueryFullName(update *tgbotapi.Update) string {
+	user := update.CallbackQuery.From
+	if user.LastName == "" {
+		return fmt.Sprintf("%s %s", user.FirstName, user.LastName)
 	}
-	// 其他错误
-	if err != nil {
-		return nil, nil, err
-	}
-
-	user, err := GetUser(uuid)
-	if err != nil {
-		return nil, nil, err
-	}
-	permissions, err := GetPermissions(user.Premium)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return user, permissions, nil
-
+	return user.FirstName
 }
 
-func GetUserUUID(userID int64) (string, bool, error) {
+func ParseUserId(update *tgbotapi.Update) int64 {
+	msg := update.Message
+	if msg == nil {
+		return 0
+	}
+	return msg.From.ID
+}
+
+func User(userID int64) (*model.User, error) {
+	uuid, ok, err := userUUID(userID)
+	if !ok {
+		user, _, err := CreateUserPermissions(userID)
+		if err != nil {
+			return nil, err
+		}
+		return user, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := user(uuid)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func Permissions(userID int64) (*model.Permissions, error) {
+	uuid, ok, err := userUUID(userID)
+	if !ok {
+		_, permissions, err := CreateUserPermissions(userID)
+		if err != nil {
+			return nil, err
+		}
+		return permissions, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := user(uuid)
+	if err != nil {
+		return nil, err
+	}
+
+	permissions, err := permissions(user.Premium)
+	if err != nil {
+		return nil, err
+	}
+
+	return permissions, nil
+}
+
+func userUUID(userID int64) (string, bool, error) {
 	var userMap model.UserMap
 	err := database.DB.Where("user_id = ?", userID).First(&userMap).Error
 	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
@@ -62,7 +99,7 @@ func GetUserUUID(userID int64) (string, bool, error) {
 	return userMap.UUID, true, nil
 }
 
-func GetUser(uuid string) (*model.User, error) {
+func user(uuid string) (*model.User, error) {
 	var user model.User
 	err := database.DB.Where("uuid = ?", uuid).First(&user).Error
 	if err != nil {
@@ -72,7 +109,7 @@ func GetUser(uuid string) (*model.User, error) {
 	return &user, nil
 }
 
-func GetPermissions(premium string) (*model.Permissions, error) {
+func permissions(premium string) (*model.Permissions, error) {
 	var permissions model.Permissions
 	err := database.DB.Where("uuid = ?", premium).First(&permissions).Error
 	if err != nil {
@@ -82,7 +119,7 @@ func GetPermissions(premium string) (*model.Permissions, error) {
 	return &permissions, nil
 }
 
-func CreateUser(userID int64) (*model.User, *model.Permissions, error) {
+func CreateUserPermissions(userID int64) (*model.User, *model.Permissions, error) {
 	permissionsUUID := uuid.New().String()
 	permissions := model.BasicPermissions
 	permissions.UUID = permissionsUUID
@@ -117,7 +154,7 @@ func CreateUser(userID int64) (*model.User, *model.Permissions, error) {
 
 // 减少用户可下载文件数
 func DecrementDownloadCount(premium string) (bool, error) {
-	permissions, err := GetPermissions(premium)
+	permissions, err := permissions(premium)
 	if err != nil {
 		return false, err
 	}
@@ -136,7 +173,7 @@ func DecrementDownloadCount(premium string) (bool, error) {
 
 // 下载完成后恢复可下载文件数
 func IncrementDownloadCount(premium string) error {
-	permissions, err := GetPermissions(premium)
+	permissions, err := permissions(premium)
 	if err != nil {
 		return err
 	}
@@ -149,7 +186,7 @@ func IncrementDownloadCount(premium string) error {
 }
 
 func RemainDailyDownload(premium string) (bool, error) {
-	permissions, err := GetPermissions(premium)
+	permissions, err := permissions(premium)
 	if err != nil {
 		return false, err
 	}
@@ -170,7 +207,7 @@ func RemainDailyDownload(premium string) (bool, error) {
 }
 
 func DecrementDailyDownloadQuantity(premium string) error {
-	permissions, err := GetPermissions(premium)
+	permissions, err := permissions(premium)
 	if err != nil {
 		return err
 	}

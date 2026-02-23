@@ -1,6 +1,8 @@
 package i18n
 
 const (
+	MagnetAlreadyParsingMessageCode = "magnet_already_parsing_message"
+
 	MagnetInvalidLinkMessageCode       = "magnet_invalid_link_message"
 	MagnetMessagePlaceholderMagnetLink = "{magnet_link}"
 
@@ -15,6 +17,11 @@ const (
 	MagnetMessagePlaceholderFileSize  = "{file_size}"
 	MagnetMessagePlaceholderFileCount = "{file_count}"
 	MagnetMessagePlaceholderFileList  = "{file_list}"
+)
+
+const (
+	MagnetAlreadyParsingMessageZH = "❌ 已经有一个在解析了，请稍候…"
+	MagnetAlreadyParsingMessageEN = "❌ Already parsing, please wait…"
 )
 
 const (

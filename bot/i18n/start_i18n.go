@@ -1,6 +1,8 @@
 package i18n
 
 const (
+	StartMessageCode = "start_message"
+
 	StartMessagePlaceholderUserName        = "{bot_user_name}"
 	StartMessagePlaceholderDownloadChannel = "{download_channel}"
 	StartMessagePlaceholderHelpChannel     = "{help_channel}"

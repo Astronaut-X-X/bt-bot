@@ -20,10 +20,9 @@ import (
 // 文件下载回调处理
 func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	// // 校验下载限制
-	user, _, err := common.UserAndPermissions(update.CallbackQuery.From.ID)
+	user, err := common.User(update.CallbackQuery.From.ID)
 	if err != nil {
-		log.Println("get user and permissions error", err)
-		bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "❌ get user and permissions error"))
+		common.SendErrorMessage(bot, update.CallbackQuery.Message.Chat.ID, user.Language, err)
 		return
 	}
 	// // 并发下载限制
