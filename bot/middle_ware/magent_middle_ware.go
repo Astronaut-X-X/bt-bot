@@ -4,6 +4,7 @@ import (
 	"bt-bot/bot/common"
 	"bt-bot/bot/i18n"
 	"fmt"
+	"log"
 	"sync"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -30,6 +31,8 @@ func MagnetMiddleWare(next func(bot *tgbotapi.BotAPI, update *tgbotapi.Update)) 
 			bot.Send(reply)
 			return
 		}
+
+		log.Println("MagnetMiddleWare", cacheKey)
 
 		if isMagnetLinkInCache(cacheKey) {
 			messageText := i18n.Text(i18n.MagnetAlreadyParsingMessageCode, user.Language)
