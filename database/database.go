@@ -39,12 +39,5 @@ func InitDatabase(config Config) error {
 		return err
 	}
 
-	ResetPermissions()
-
 	return nil
-}
-
-func ResetPermissions() {
-	DB.Model(&model.Permissions{}).Where("type = ?", model.PermissionsTypeBasic).Update("async_download_remain", 1)
-	DB.Model(&model.Permissions{}).Where("type = ?", model.PermissionsTypePremium).Update("async_download_remain", 3)
 }
