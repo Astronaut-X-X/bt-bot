@@ -7,6 +7,7 @@ import (
 
 	"bt-bot/bot/callback_query"
 	"bt-bot/bot/command"
+	middleware "bt-bot/bot/middle_ware"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -63,7 +64,7 @@ func (b *Bot) Run() error {
 			}
 
 			if containsMagnetLink(update.Message.Text) {
-				command.MagnetCommand(b.bot, &update)
+				middleware.MagnetMiddleWare(command.MagnetCommand)(b.bot, &update)
 				return
 			}
 
