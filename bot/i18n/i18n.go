@@ -37,6 +37,7 @@ func init() {
 
 		// Button
 		ButtonStopDownloadCode: ButtonStopDownloadZH,
+		ButtonStopMagnetCode:   ButtonStopMagnetZH,
 	}
 	EN_MAP = map[string]string{
 		// Error
@@ -62,6 +63,7 @@ func init() {
 
 		// Button
 		ButtonStopDownloadCode: ButtonStopDownloadEN,
+		ButtonStopMagnetCode:   ButtonStopMagnetEN,
 	}
 }
 
