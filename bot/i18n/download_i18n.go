@@ -7,6 +7,7 @@ const (
 
 	DownloadStartMessageCode      = "download_start_message"
 	DownloadProcessingMessageCode = "download_processing_message"
+	DownloadSendFileMessageCode   = "download_send_file_message"
 	DownloadSuccessMessageCode    = "download_success_message"
 	DownloadFailedMessageCode     = "download_failed_message"
 
@@ -64,6 +65,24 @@ const (
 🔗 Magnet: {magnet}
 💾 Downloading:
 [{percent}({bytes_completed}/{total_bytes})] {download_files}
+`
+)
+
+const (
+	DownloadSendFileMessageZH = `
+⌛ 文件发送中...
+
+🔗 Magent: {magnet}
+💾 正在发送文件：
+{download_files}
+`
+
+	DownloadSendFileMessageEN = `
+⌛ Sending file...
+
+🔗 Magnet: {magnet}
+💾 Sending file:
+{download_files}
 `
 )
 

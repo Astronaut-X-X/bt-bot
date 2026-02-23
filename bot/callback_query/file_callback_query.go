@@ -119,11 +119,19 @@ func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 
 	// 下载成功
 	successCallback := func(t *t.Torrent) {
+		// 发送文件发送消息
+		message := i18n.Text(i18n.DownloadSendFileMessageCode, user.Language)
+		message = i18n.Replace(message, map[string]string{
+			i18n.DownloadMessagePlaceholderMagnet:        infoHash,
+			i18n.DownloadMessagePlaceholderDownloadFiles: parseFileName(t, fileIndex),
+		})
+		bot.Send(tgbotapi.NewEditMessageText(chatID, messageID, message))
+
 		// 发送下载消息
 		sendDownloadMessage(infoHash, fileIndex, t)
 
 		// 发送下载成功消息
-		message := i18n.Text(i18n.DownloadSuccessMessageCode, user.Language)
+		message = i18n.Text(i18n.DownloadSuccessMessageCode, user.Language)
 		message = i18n.Replace(message, map[string]string{
 			i18n.DownloadMessagePlaceholderMagnet:          infoHash,
 			i18n.DownloadMessagePlaceholderDownloadFiles:   parseFileName(t, fileIndex),
