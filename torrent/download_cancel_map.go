@@ -13,6 +13,10 @@ var (
 	downloadCancelMap map[string]context.CancelFunc
 )
 
+func init() {
+	downloadCancelMap = make(map[string]context.CancelFunc)
+}
+
 // 设置一个下载任务的取消函数
 func SetDownloadCancel(infoHash string, fileIndex int, cancel context.CancelFunc) {
 	downloadCancelMapLock.Lock()

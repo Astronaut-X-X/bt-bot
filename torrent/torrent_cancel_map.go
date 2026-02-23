@@ -13,6 +13,10 @@ var (
 	torrentCancelMap map[string]context.CancelFunc
 )
 
+func init() {
+	torrentCancelMap = make(map[string]context.CancelFunc)
+}
+
 // 设置一个磁力链接的取消函数
 func SetTorrentCancel(magnet string, userId int64, cancel context.CancelFunc) {
 	torrentCancelMapLock.Lock()
