@@ -195,19 +195,19 @@ func sendDownloadMessage(infoHash string, fileIndex int, t *t.Torrent) {
 		}
 		messageId = int64(messageId_)
 
+		// 发送下载文件列表
+		files := t.Info().Files
+		filesText := ""
+		for index, file := range files {
+			filesText += fmt.Sprintf("%d. %s (%s)\n", index+1, file.DisplayPath(t.Info()), utils.FormatBytesToSizeString(file.Length))
+		}
+		telegram.SendCommentMessageText(filesText, int(messageId))
+
 		err = common.RecordDownloadMessage(infoHash, messageId)
 		if err != nil {
 			log.Println("record download message error", err)
 		}
 	}
-
-	// 发送下载文件列表
-	files := t.Info().Files
-	filesText := ""
-	for index, file := range files {
-		filesText += fmt.Sprintf("%d. %s (%s)\n", index+1, file.DisplayPath(t.Info()), utils.FormatBytesToSizeString(file.Length))
-	}
-	telegram.SendCommentMessageText(filesText, int(messageId))
 
 	// 发送下载文件评论
 	sendDownloadComment(infoHash, fileIndex, t, messageId)
