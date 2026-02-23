@@ -18,6 +18,7 @@ require (
 )
 
 require (
+	github.com/Eyevinn/mp4ff v0.51.0 // indirect
 	github.com/RoaringBitmap/roaring v1.2.3 // indirect
 	github.com/ajwerner/btree v0.0.0-20211221152037-f427b3e689c0 // indirect
 	github.com/alecthomas/atomic v0.1.0-alpha2 // indirect

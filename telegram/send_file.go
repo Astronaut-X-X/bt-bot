@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Eyevinn/mp4ff/mp4"
 	"github.com/gotd/td/telegram/uploader"
 	"github.com/gotd/td/tg"
 )
@@ -220,20 +221,21 @@ func SendCommentMessage(path string, msgId int) error {
 	}
 
 	switch ext {
-	case ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".webp":
-		sendMsg.Media = &tg.InputMediaUploadedDocument{
-			Attributes: []tg.DocumentAttributeClass{
-				&tg.DocumentAttributeFilename{FileName: filename},
-				&tg.DocumentAttributeImageSize{},
-			},
-			File:     inputFile,
-			MimeType: mimeType,
+	case ".mp4":
+		width, height, duration, err := parseMp4VideoMetadata(path)
+		if err != nil {
+			log.Println("failed to parse mp4 video metadata:", err)
+			return err
 		}
-	case ".mp4", ".mov", ".mkv", ".webm", ".avi":
 		sendMsg.Media = &tg.InputMediaUploadedDocument{
 			Attributes: []tg.DocumentAttributeClass{
 				&tg.DocumentAttributeFilename{FileName: filename},
-				&tg.DocumentAttributeVideo{},
+				&tg.DocumentAttributeVideo{
+					SupportsStreaming: true,
+					Duration:          float64(duration),
+					W:                 width,
+					H:                 height,
+				},
 			},
 			File:     inputFile,
 			MimeType: mimeType,
@@ -315,4 +317,35 @@ func SendCommentMessageText(text string, msgId int) error {
 	}
 
 	return nil
+}
+
+func parseMp4VideoMetadata(filePath string) (width, height int, duration int32, err error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return 0, 0, 0, fmt.Errorf("open file failed: %w", err)
+	}
+	defer file.Close()
+
+	mp4File, err := mp4.DecodeFile(file)
+	if err != nil {
+		return 0, 0, 0, fmt.Errorf("decode mp4 failed: %w", err)
+	}
+
+	if mvhd := mp4File.Moov.Mvhd; mvhd != nil {
+		timescale := mvhd.Timescale
+		durationInTimescale := mvhd.Duration
+		if timescale > 0 {
+			duration = int32(durationInTimescale / uint64(timescale))
+		}
+	}
+
+	for _, track := range mp4File.Moov.Traks {
+		if track.Mdia.Hdlr.HandlerType == "vide" && track.Tkhd != nil {
+			width = int(track.Tkhd.Width >> 16)
+			height = int(track.Tkhd.Height >> 16)
+			return width, height, duration, nil
+		}
+	}
+
+	return 1920, 1080, 60, fmt.Errorf("no video track found in mp4 file")
 }
