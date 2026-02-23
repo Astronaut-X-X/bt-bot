@@ -18,7 +18,7 @@ import (
 
 func ParseFullName(update *tgbotapi.Update) string {
 	user := update.Message.From
-	if user.LastName == "" {
+	if user.LastName != "" {
 		return fmt.Sprintf("%s %s", user.FirstName, user.LastName)
 	}
 	return user.FirstName
