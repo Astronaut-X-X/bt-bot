@@ -20,8 +20,8 @@ const (
 )
 
 const (
-	MagnetAlreadyParsingMessageZH = "❌ 已经有一个在解析了，请稍候…"
-	MagnetAlreadyParsingMessageEN = "❌ Already parsing, please wait…"
+	MagnetAlreadyParsingMessageZH = "❌ 已经有一个在解析了，请稍后再试"
+	MagnetAlreadyParsingMessageEN = "❌ Already parsing, please try again later"
 )
 
 const (
