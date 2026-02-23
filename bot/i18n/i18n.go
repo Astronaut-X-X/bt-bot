@@ -35,6 +35,7 @@ func init() {
 		DownloadFileDownloadSizeNotEnoughMessageCode:   DownloadFileDownloadSizeNotEnoughMessageZH,
 
 		DownloadStartMessageCode:      DownloadStartMesssageZH,
+		DownloadSendFileMessageCode:   DownloadSendFileMessageZH,
 		DownloadProcessingMessageCode: DownloadProcessingMessageZH,
 		DownloadSuccessMessageCode:    DownloadSuccessMessageZH,
 		DownloadFailedMessageCode:     DownloadFailedMessageZH,
@@ -65,6 +66,7 @@ func init() {
 		DownloadFileDownloadSizeNotEnoughMessageCode:   DownloadFileDownloadSizeNotEnoughMessageEN,
 
 		DownloadStartMessageCode:      DownloadStartMesssageEN,
+		DownloadSendFileMessageCode:   DownloadSendFileMessageEN,
 		DownloadProcessingMessageCode: DownloadProcessingMessageEN,
 		DownloadSuccessMessageCode:    DownloadSuccessMessageEN,
 		DownloadFailedMessageCode:     DownloadFailedMessageEN,

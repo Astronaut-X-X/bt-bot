@@ -270,6 +270,7 @@ func uploadFile(client *Client, path string) (tg.InputFileClass, error) {
 	// 参考: https://core.telegram.org/api/files#uploading-files
 	// 使用 512KB 可以避免过多的协议开销，并且能够达到最大文件大小限制
 	up := uploader.NewUploader(client.API())
+	up.WithPartSize(524288)
 	up.WithThreads(5)
 	up.WithProgress(&uploadProgress{})
 	return up.FromFile(context.TODO(), file)
