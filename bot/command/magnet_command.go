@@ -175,12 +175,12 @@ func parseMagnetLink(ctx context.Context, magnetLink string) (*model.Torrent, er
 
 func fileList(files []model.TorrentFile) []string {
 	fileList := make([]string, 0)
-	for index, file := range files {
+	for _, file := range files {
 		path := file.Path
 		if len(file.PathUtf8) > 0 {
 			path = file.PathUtf8
 		}
-		fileLine := fmt.Sprintf("%s %d.%s (%s)", emojifyFilename(path), index+1, path, utils.FormatBytesToSizeString(file.Length))
+		fileLine := fmt.Sprintf("%s %d.%s (%s)", emojifyFilename(path), file.FileIndex+1, path, utils.FormatBytesToSizeString(file.Length))
 		fileList = append(fileList, fileLine)
 	}
 	return fileList

@@ -92,6 +92,7 @@ const (
 📦 文件大小：{file_size}
 🗃️ 文件数量：{file_count}
 📋 文件列表：
+
 {file_list}
 
 📥 选择文件下载：
@@ -104,6 +105,7 @@ const (
 📦 File size: {file_size}
 🗃️ File count: {file_count}
 📋 File list: 
+
 {file_list}
 
 📥 Select file to download:
