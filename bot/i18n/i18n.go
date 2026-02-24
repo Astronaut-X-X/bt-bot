@@ -20,9 +20,10 @@ func init() {
 		ErrorStopMagnetMessageCode:   ErrorStopMagnetMessageZH,
 
 		// Command
-		StartMessageCode: StartMessageZH,
-		SelfMessageCode:  SelfMessageZH,
-		HelpMessageCode:  HelpMessageZH,
+		StartMessageCode:     StartMessageZH,
+		SelfMessageCode:      SelfMessageZH,
+		HelpMessageCode:      HelpMessageZH,
+		RecommendMessageCode: RecommendMessageZH,
 
 		// Magnet
 		MagnetAlreadyParsingMessageCode: MagnetAlreadyParsingMessageZH,
@@ -53,9 +54,10 @@ func init() {
 		ErrorStopMagnetMessageCode:   ErrorStopMagnetMessageEN,
 
 		// Command
-		StartMessageCode: StartMessageEN,
-		SelfMessageCode:  SelfMessageEN,
-		HelpMessageCode:  HelpMessageEN,
+		StartMessageCode:     StartMessageEN,
+		SelfMessageCode:      SelfMessageEN,
+		HelpMessageCode:      HelpMessageEN,
+		RecommendMessageCode: RecommendMessageEN,
 
 		// Magnet
 		MagnetAlreadyParsingMessageCode: MagnetAlreadyParsingMessageEN,
