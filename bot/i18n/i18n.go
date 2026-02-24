@@ -15,7 +15,9 @@ var (
 func init() {
 	ZH_MAP = map[string]string{
 		// Error
-		ErrorCommonMessageCode: ErrorCommonMessageZH,
+		ErrorCommonMessageCode:       ErrorCommonMessageZH,
+		ErrorStopDownloadMessageCode: ErrorStopDownloadMessageZH,
+		ErrorStopMagnetMessageCode:   ErrorStopMagnetMessageZH,
 
 		// Command
 		StartMessageCode: StartMessageZH,
@@ -46,7 +48,9 @@ func init() {
 	}
 	EN_MAP = map[string]string{
 		// Error
-		ErrorCommonMessageCode: ErrorCommonMessageEN,
+		ErrorCommonMessageCode:       ErrorCommonMessageEN,
+		ErrorStopDownloadMessageCode: ErrorStopDownloadMessageEN,
+		ErrorStopMagnetMessageCode:   ErrorStopMagnetMessageEN,
 
 		// Command
 		StartMessageCode: StartMessageEN,

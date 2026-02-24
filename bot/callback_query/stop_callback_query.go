@@ -1,6 +1,8 @@
 package callback_query
 
 import (
+	"bt-bot/bot/common"
+	"bt-bot/bot/i18n"
 	"bt-bot/torrent"
 	"errors"
 	"log"
@@ -11,6 +13,13 @@ import (
 )
 
 func StopCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
+	userId := common.ParseCallbackQueryUserId(update)
+	user, err := common.User(userId)
+	if err != nil {
+		common.SendErrorMessage(bot, update.CallbackQuery.Message.Chat.ID, user.Language, err)
+		return
+	}
+
 	data := update.CallbackQuery.Data
 
 	infoHash, fileIndex, err := parseStopCallbackQueryData(data)
@@ -20,7 +29,15 @@ func StopCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 		return
 	}
 
-	torrent.DownloadCancel(infoHash, fileIndex)
+	ok := torrent.DownloadCancel(infoHash, fileIndex)
+	if !ok {
+		editMsg := tgbotapi.NewEditMessageText(
+			update.CallbackQuery.Message.Chat.ID,
+			update.CallbackQuery.Message.MessageID,
+			i18n.Text(i18n.ErrorStopDownloadMessageCode, user.Language),
+		)
+		bot.Send(editMsg)
+	}
 }
 
 func parseStopCallbackQueryData(data string) (string, int, error) {

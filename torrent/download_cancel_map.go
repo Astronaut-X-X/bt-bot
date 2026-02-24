@@ -36,7 +36,7 @@ func RemoveDownloadCancel(infoHash string, fileIndex int) {
 }
 
 // 调用并移除某个下载任务的取消函数，实现任务取消
-func DownloadCancel(infoHash string, fileIndex int) {
+func DownloadCancel(infoHash string, fileIndex int) bool {
 	downloadCancelMapLock.Lock()
 	defer downloadCancelMapLock.Unlock()
 
@@ -46,4 +46,6 @@ func DownloadCancel(infoHash string, fileIndex int) {
 		cancel()
 		delete(downloadCancelMap, key)
 	}
+
+	return ok
 }

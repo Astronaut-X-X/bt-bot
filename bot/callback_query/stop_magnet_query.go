@@ -1,7 +1,10 @@
 package callback_query
 
 import (
+	"bt-bot/bot/common"
+	"bt-bot/bot/i18n"
 	"bt-bot/torrent"
+
 	"errors"
 	"log"
 	"strconv"
@@ -11,6 +14,13 @@ import (
 )
 
 func StopMagnetCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
+	userId := common.ParseCallbackQueryUserId(update)
+	user, err := common.User(userId)
+	if err != nil {
+		common.SendErrorMessage(bot, update.CallbackQuery.Message.Chat.ID, user.Language, err)
+		return
+	}
+
 	data := update.CallbackQuery.Data
 
 	infoHash, userId, err := parseStopMagnetCallbackQueryData(data)
@@ -24,7 +34,7 @@ func StopMagnetCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Updat
 		editMsg := tgbotapi.NewEditMessageText(
 			update.CallbackQuery.Message.Chat.ID,
 			update.CallbackQuery.Message.MessageID,
-			"❌ 任务已无法取消，可能已完成或不存在。",
+			i18n.Text(i18n.ErrorStopMagnetMessageCode, user.Language),
 		)
 		bot.Send(editMsg)
 	}

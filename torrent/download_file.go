@@ -31,8 +31,13 @@ type DownloadParams struct {
 func Download(params DownloadParams) {
 	magnetLink := fmt.Sprintf("magnet:?xt=urn:btih:%s", params.InfoHash)
 
+	// 创建下载上下文
+	downloadCtx, downloadCancel := context.WithCancel(context.Background())
+	SetDownloadCancel(params.InfoHash, params.FileIndex, downloadCancel)
+	defer RemoveDownloadCancel(params.InfoHash, params.FileIndex)
+
 	// 解析磁力链接，获取 Torrent 句柄
-	t, err := ParseMagnetLink(context.Background(), magnetLink)
+	t, err := ParseMagnetLink(downloadCtx, magnetLink)
 	if err != nil {
 		log.Println("parse magnet link error", err)
 		return
@@ -64,12 +69,7 @@ func Download(params DownloadParams) {
 
 	// 估计下载时间
 	estimatedTime := estimatedDownloadTime(totalLength)
-	baseCtx, baseCancel := context.WithTimeout(context.Background(), estimatedTime)
-	downloadCtx, downloadCancel := context.WithCancel(baseCtx)
-
-	// 设置下载取消函数
-	SetDownloadCancel(params.InfoHash, params.FileIndex, downloadCancel)
-	defer RemoveDownloadCancel(params.InfoHash, params.FileIndex)
+	baseCtx, baseCancel := context.WithTimeout(downloadCtx, estimatedTime)
 
 	// 清理资源
 	defer func() {
@@ -82,9 +82,9 @@ func Download(params DownloadParams) {
 	// 下载主循环
 	for {
 		select {
-		case <-downloadCtx.Done():
+		case <-baseCtx.Done():
 			// 判断被取消还是超时
-			if downloadCtx.Err() == context.Canceled {
+			if baseCtx.Err() == context.Canceled {
 				params.CancelCallback(t)
 				log.Println("download all file canceled")
 			} else {
