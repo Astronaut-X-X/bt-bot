@@ -35,7 +35,6 @@ func RecommendCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	})
 
 	reply := tgbotapi.NewMessage(chatID, message)
-	reply.ReplyMarkup = startReplyMarkup()
 
 	if _, err := bot.Send(reply); err != nil {
 		log.Println("Send start message error:", err)
