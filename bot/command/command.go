@@ -7,10 +7,11 @@ import (
 )
 
 const (
-	CommandStart  = "start"
-	CommandHelp   = "help"
-	CommandMagnet = "magnet"
-	CommandSelf   = "self"
+	CommandStart     = "start"
+	CommandHelp      = "help"
+	CommandMagnet    = "magnet"
+	CommandSelf      = "self"
+	CommandRecommend = "recommend"
 )
 
 func CommandHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
@@ -31,6 +32,8 @@ func CommandHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 			SelfCommand(bot, update)
 		case CommandMagnet:
 			middleware.MagnetMiddleWare(MagnetCommand)(bot, update)
+		case CommandRecommend:
+			RecommendCommand(bot, update)
 		}
 	}
 }

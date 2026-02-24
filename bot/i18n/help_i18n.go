@@ -16,6 +16,7 @@ const (
 • /magnet <磁力链接> - 解析磁力链接信息
 • /self - 个人消息
 • /help - 显示帮助信息
+• /recommend - 推荐群组频道
 
 Bot频道：
 下载文件频道：{download_channel}
