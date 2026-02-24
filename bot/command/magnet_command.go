@@ -100,19 +100,39 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 		return
 	}
 
+	// 获取文件列表
+	files := info.Files
+	filesFirstPage := files[:min(100, len(files))]
+
+	// 发送第一页成功消息
 	successMessage := i18n.Text(i18n.MagnetSuccessMessageCode, user.Language)
 	successMessage = i18n.Replace(successMessage, map[string]string{
 		i18n.MagnetMessagePlaceholderMagnetLink: magnetLink,
 		i18n.MagnetMessagePlaceholderFileName:   info.Name,
 		i18n.MagnetMessagePlaceholderFileSize:   utils.FormatBytesToSizeString(info.TotalLength()),
-		i18n.MagnetMessagePlaceholderFileCount:  strconv.Itoa(len(info.Files)),
-		i18n.MagnetMessagePlaceholderFileList:   strings.Join(fileList(info.Files), "\n"),
+		i18n.MagnetMessagePlaceholderFileCount:  strconv.Itoa(len(filesFirstPage)),
+		i18n.MagnetMessagePlaceholderFileList:   strings.Join(fileList(filesFirstPage), "\n"),
 	})
-
 	editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, successMessage)
-	editMsg.ReplyMarkup = createFileButtons(info.Files, info.InfoHash)
-
+	editMsg.ReplyMarkup = createFileButtons(filesFirstPage, info.InfoHash)
 	bot.Send(editMsg)
+
+	// 发送后续页成功消息
+	for i := 100; i < len(files); i += 100 {
+		filesPage := files[i:min(i+100, len(files))]
+		successMessage = i18n.Text(i18n.MagnetSuccessMessageCode, user.Language)
+		successMessage = i18n.Replace(successMessage, map[string]string{
+			i18n.MagnetMessagePlaceholderMagnetLink: magnetLink,
+			i18n.MagnetMessagePlaceholderFileName:   info.Name,
+			i18n.MagnetMessagePlaceholderFileSize:   utils.FormatBytesToSizeString(info.TotalLength()),
+			i18n.MagnetMessagePlaceholderFileCount:  strconv.Itoa(len(filesPage)),
+			i18n.MagnetMessagePlaceholderFileList:   strings.Join(fileList(filesPage), "\n"),
+		})
+
+		message := tgbotapi.NewMessage(chatID, successMessage)
+		message.ReplyMarkup = createFileButtons(filesPage, info.InfoHash)
+		bot.Send(message)
+	}
 }
 
 // parse magnet link to info
@@ -160,63 +180,38 @@ func fileList(files []model.TorrentFile) []string {
 		if len(file.PathUtf8) > 0 {
 			path = file.PathUtf8
 		}
-		fileLine := fmt.Sprintf("• %d.%s (%s)", index+1, path, utils.FormatBytesToSizeString(file.Length))
+		fileLine := fmt.Sprintf("%s %d.%s (%s)", emojifyFilename(path), index+1, path, utils.FormatBytesToSizeString(file.Length))
 		fileList = append(fileList, fileLine)
 	}
 	return fileList
 }
 
-// createFileButtons 创建文件按钮
+// createFileButtons 创建文件按钮（多按钮同行）
 func createFileButtons(files []model.TorrentFile, infoHash string) *tgbotapi.InlineKeyboardMarkup {
-	log.Println("infoHash", infoHash)
+	const maxButtons = 100   // Telegram 限制每个键盘最多 100 个按钮，这里设置 100 个文件按钮
+	const buttonsPerRow = 10 // 每行显示的按钮数
 
-	const maxButtons = 50       // Telegram 限制每个键盘最多 100 个按钮，这里设置 50 个文件按钮
-	const maxButtonTextLen = 64 // Telegram 按钮 callback_data 最大 64 字符
 	var buttons [][]tgbotapi.InlineKeyboardButton
 
-	// 计算要显示的文件数量
-	fileCount := len(files)
-	if fileCount > maxButtons {
-		fileCount = maxButtons
-	}
-
-	// 添加所有文件按钮（全体下载，index = -1）
-	buttonText := "📄 All Files"
-	callbackData := fmt.Sprintf("file_%s_%d", infoHash, -1)
-	// callback_data 必须小于等于 64 字节
-	if len(callbackData) > maxButtonTextLen {
-		callbackData = callbackData[:maxButtonTextLen]
-	}
-	button := tgbotapi.NewInlineKeyboardButtonData(buttonText, callbackData)
-	buttons = append(buttons, []tgbotapi.InlineKeyboardButton{button})
-
-	// 为每个文件创建按钮
-	for i := 0; i < fileCount; i++ {
+	// 文件按钮，每行多个按钮
+	row := []tgbotapi.InlineKeyboardButton{}
+	for i := 0; i < len(files); i++ {
 		file := files[i]
-		path := file.PathUtf8
-		if len(path) == 0 {
-			path = files[i].Path
-		}
 
-		fileName := path
-		emoji := emojifyFilename(fileName)
-
-		buttonText := fmt.Sprintf("%s %d.%s", emoji, file.FileIndex+1, fileName)
+		buttonText := fmt.Sprintf("%d", file.FileIndex+1)
 		callbackData := fmt.Sprintf("file_%s_%d", infoHash, file.FileIndex)
-		if len(callbackData) > maxButtonTextLen {
-			callbackData = callbackData[:maxButtonTextLen]
-		}
 		button := tgbotapi.NewInlineKeyboardButtonData(buttonText, callbackData)
-		buttons = append(buttons, []tgbotapi.InlineKeyboardButton{button})
-	}
+		row = append(row, button)
 
-	// 如果文件数量超过显示限制，添加"查看更多"提示
-	if len(files) > maxButtons {
-		infoButton := tgbotapi.NewInlineKeyboardButtonData(
-			fmt.Sprintf("📋 后一页 >"),
-			fmt.Sprintf("info_more_%s_2", infoHash),
-		)
-		buttons = append(buttons, []tgbotapi.InlineKeyboardButton{infoButton})
+		// 每buttonsPerRow个按钮一行
+		if len(row) == buttonsPerRow {
+			buttons = append(buttons, row)
+			row = []tgbotapi.InlineKeyboardButton{}
+		}
+	}
+	// 有剩余按钮未满一行
+	if len(row) > 0 {
+		buttons = append(buttons, row)
 	}
 
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(buttons...)
