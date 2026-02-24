@@ -177,7 +177,7 @@ func RemainDailyDownloadQuantity(premium string) (int, error) {
 	if !date.Equal(time.Now().Truncate(24 * time.Hour)) {
 		permissions.DailyDownloadRemain = permissions.DailyDownloadQuantity        // 重置剩余下载次数为每日最大下载数
 		permissions.DailyDownloadDate = time.Now().Truncate(24 * time.Hour).Unix() // 更新为今天的日期
-		if err = setPermissions(premium, permissions); err != nil {
+		if err = setPermissions(permissions); err != nil {
 			return 0, err
 		}
 	}
@@ -193,8 +193,12 @@ func DecrementDailyDownloadQuantity(premium string) error {
 		return err
 	}
 
-	permissions.DailyDownloadRemain = min(permissions.DailyDownloadRemain-1, 0)
-	if err = setPermissions(premium, permissions); err != nil {
+	permissions.DailyDownloadRemain--
+	if permissions.DailyDownloadRemain < 0 {
+		permissions.DailyDownloadRemain = 0
+	}
+
+	if err = setPermissions(permissions); err != nil {
 		return err
 	}
 	return nil
@@ -205,7 +209,7 @@ var (
 )
 
 // 设置权限
-func setPermissions(premium string, permissions *model.Permissions) error {
+func setPermissions(permissions *model.Permissions) error {
 	SetPermissionsLock.Lock()
 	defer SetPermissionsLock.Unlock()
 	return database.DB.Save(permissions).Error
