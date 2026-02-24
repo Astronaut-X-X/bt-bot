@@ -129,7 +129,7 @@ func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 		bot.Send(tgbotapi.NewEditMessageText(chatID, messageID, message))
 
 		// 发送下载消息
-		sendDownloadMessage(infoHash, fileIndex, t)
+		sendDownloadMessage(infoHash, fileIndex, t, user.Premium)
 
 		// 发送下载成功消息
 		message = i18n.Text(i18n.DownloadSuccessMessageCode, user.Language)
@@ -187,7 +187,7 @@ func parseFileName(t *t.Torrent, fileIndex int) string {
 	return files[fileIndex].DisplayPath()
 }
 
-func sendDownloadMessage(infoHash string, fileIndex int, t *t.Torrent) {
+func sendDownloadMessage(infoHash string, fileIndex int, t *t.Torrent, premium string) {
 	messageId, ok, _ := common.CheckDownloadMessage(infoHash)
 	if !ok {
 		messageText := `
@@ -219,10 +219,10 @@ func sendDownloadMessage(infoHash string, fileIndex int, t *t.Torrent) {
 	}
 
 	// 发送下载文件评论
-	sendDownloadComment(infoHash, fileIndex, t, messageId)
+	sendDownloadComment(infoHash, fileIndex, t, messageId, premium)
 }
 
-func sendDownloadComment(infoHash string, fileIndex int, t *t.Torrent, messageId int64) {
+func sendDownloadComment(infoHash string, fileIndex int, t *t.Torrent, messageId int64, premium string) {
 	ok, err := common.CheckDownloadComment(infoHash, fileIndex)
 	if ok {
 		return
@@ -266,6 +266,11 @@ func sendDownloadComment(infoHash string, fileIndex int, t *t.Torrent, messageId
 	}
 
 	deleteDownloadFile(filePaths)
+
+	err = common.DecrementDailyDownloadQuantity(premium)
+	if err != nil {
+		log.Println("decrement daily download quantity error", err)
+	}
 }
 
 func deleteDownloadFile(filePath []string) {
