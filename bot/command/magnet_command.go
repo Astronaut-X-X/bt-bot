@@ -101,7 +101,7 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	}
 
 	// 获取文件列表
-	const maxButtons = 50
+	const maxButtons = 48
 	files := info.Files
 	filesFirstPage := files[:min(maxButtons, len(files))]
 
@@ -189,7 +189,7 @@ func fileList(files []model.TorrentFile) []string {
 
 // createFileButtons 创建文件按钮（多按钮同行）
 func createFileButtons(files []model.TorrentFile, infoHash string) *tgbotapi.InlineKeyboardMarkup {
-	const buttonsPerRow = 10 // 每行显示的按钮数
+	const buttonsPerRow = 8 // 每行显示的按钮数
 
 	var buttons [][]tgbotapi.InlineKeyboardButton
 
