@@ -17,7 +17,14 @@ import (
 )
 
 func ParseFullName(update *tgbotapi.Update) string {
-	user := update.Message.From
+	message := update.Message
+	if message == nil {
+		return ""
+	}
+	user := message.From
+	if user == nil {
+		return ""
+	}
 	if user.LastName != "" {
 		return fmt.Sprintf("%s %s", user.FirstName, user.LastName)
 	}
@@ -25,7 +32,14 @@ func ParseFullName(update *tgbotapi.Update) string {
 }
 
 func ParseCallbackQueryFullName(update *tgbotapi.Update) string {
-	user := update.CallbackQuery.From
+	callbackQuery := update.CallbackQuery
+	if callbackQuery == nil {
+		return ""
+	}
+	user := callbackQuery.From
+	if user == nil {
+		return ""
+	}
 	if user.LastName == "" {
 		return fmt.Sprintf("%s %s", user.FirstName, user.LastName)
 	}
