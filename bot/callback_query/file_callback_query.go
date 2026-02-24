@@ -192,10 +192,10 @@ func sendDownloadMessage(infoHash string, fileIndex int, t *t.Torrent, premium s
 	if !ok {
 		messageText := `
 #{info_hash}
-🔗 Magnet: {magnet}
+#{torrent_name}
 		`
 		messageText = strings.ReplaceAll(messageText, "{info_hash}", infoHash)
-		messageText = strings.ReplaceAll(messageText, "{magnet}", "magnet:?xt=urn:btih:"+infoHash)
+		messageText = strings.ReplaceAll(messageText, "{torrent_name}", t.Info().Name)
 
 		messageId_, err := telegram.SendChannelMessage(messageText)
 		if err != nil {
@@ -208,7 +208,7 @@ func sendDownloadMessage(infoHash string, fileIndex int, t *t.Torrent, premium s
 		files := t.Info().Files
 		filesText := ""
 		for index, file := range files {
-			filesText += fmt.Sprintf("%d. %s (%s)\n", index+1, file.DisplayPath(t.Info()), utils.FormatBytesToSizeString(file.Length))
+			filesText += fmt.Sprintf("%s %d. %s (%s)\n", emojifyFilename(file.DisplayPath(t.Info())), index+1, file.DisplayPath(t.Info()), utils.FormatBytesToSizeString(file.Length))
 		}
 		telegram.SendCommentMessageText(filesText, int(messageId))
 
@@ -280,5 +280,63 @@ func deleteDownloadFile(filePath []string) {
 			log.Println("delete download file error", err)
 			return
 		}
+	}
+}
+
+func emojifyFilename(filename string) string {
+	// 根据文件后缀返回带有 emoji 的文件名
+	extToEmoji := map[string]string{
+		".mp4":     "🎬",
+		".mkv":     "🎥",
+		".avi":     "📽️",
+		".mov":     "🎞️",
+		".ts":      "📼",
+		".mp3":     "🎵",
+		".flac":    "🎶",
+		".wav":     "🔊",
+		".ape":     "🎼",
+		".aac":     "🎧",
+		".ogg":     "🎶",
+		".jpg":     "🖼️",
+		".jpeg":    "🖼️",
+		".png":     "📸",
+		".gif":     "🎞️",
+		".webp":    "🌆",
+		".bmp":     "🖼️",
+		".zip":     "🗜️",
+		".rar":     "🗂️",
+		".7z":      "📦",
+		".tar":     "📦",
+		".gz":      "🗄️",
+		".pdf":     "📑",
+		".epub":    "📚",
+		".txt":     "📄",
+		".doc":     "📝",
+		".docx":    "📝",
+		".ppt":     "📊",
+		".pptx":    "📊",
+		".xls":     "📈",
+		".xlsx":    "📈",
+		".apk":     "🤖",
+		".exe":     "🖥️",
+		".iso":     "💿",
+		".torrent": "🧲",
+	}
+
+	ext := ""
+	for i := len(filename) - 1; i >= 0; i-- {
+		if filename[i] == '.' {
+			ext = filename[i:]
+			break
+		}
+	}
+	emoji := ""
+	if val, ok := extToEmoji[ext]; ok {
+		emoji = val
+	}
+	if emoji != "" {
+		return emoji
+	} else {
+		return "📄"
 	}
 }
