@@ -57,8 +57,6 @@ func SendChannelMessage(text string) (int, error) {
 		}
 	}
 
-	log.Println("send message success", msgId)
-
 	sleepTime := 4 * time.Second
 	for {
 		time.Sleep(sleepTime)
@@ -67,8 +65,6 @@ func SendChannelMessage(text string) (int, error) {
 			log.Println("get discussion message id success", msgId)
 			return msgId, nil
 		}
-
-		log.Println("failed to get discussion message id:", err)
 
 		if !(strings.Contains(err.Error(), "FLOOD_WAIT") ||
 			strings.Contains(err.Error(), "MSG_ID_INVALID")) {
@@ -82,7 +78,6 @@ func SendChannelMessage(text string) (int, error) {
 				sleepTime = 60 * time.Second
 			}
 		}
-		log.Printf("failed to get discussion message id, sleep for %d seconds ", sleepTime/time.Second)
 	}
 }
 
@@ -272,15 +267,7 @@ func uploadFile(client *Client, path string) (tg.InputFileClass, error) {
 	up := uploader.NewUploader(client.API())
 	up.WithPartSize(524288)
 	up.WithThreads(5)
-	up.WithProgress(&uploadProgress{})
 	return up.FromFile(context.TODO(), file)
-}
-
-type uploadProgress struct{}
-
-func (p *uploadProgress) Chunk(ctx context.Context, state uploader.ProgressState) error {
-	log.Println("upload progress:", state.Uploaded, state.Total, state.Part, state.PartSize, state.ID, state.Name)
-	return nil
 }
 
 func SendCommentMessageText(text string, msgId int) error {

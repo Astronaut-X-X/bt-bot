@@ -77,8 +77,6 @@ func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	}
 	messageID := message.MessageID
 
-	log.Println("download file", infoHash, fileIndex)
-
 	// 下载进度
 	progressCallback := func(params torrent.ProgressParams) {
 		message := i18n.Text(i18n.DownloadProcessingMessageCode, user.Language)
@@ -249,8 +247,6 @@ func sendDownloadComment(infoHash string, fileIndex int, t *t.Torrent, messageId
 		file := t.Info().Files[fileIndex]
 		filePaths = append(filePaths, filepath.Join(downloadDir, file.DisplayPath(t.Info())))
 	}
-
-	log.Println("send download comment", filePaths)
 
 	for _, filePath := range filePaths {
 		err := telegram.SendCommentMessage(filePath, int(messageId))
