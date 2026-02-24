@@ -150,6 +150,7 @@ func parseMagnetLink(ctx context.Context, magnetLink string) (*model.Torrent, er
 	if dbInfo != nil {
 		info_ = *dbInfo
 	} else {
+		log.Println("======================= parseMagnetLink ========================", magnetLink)
 		// 提取 InfoHash
 		info, err := torrent.ParseMagnetLink(ctx, magnetLink)
 		if err != nil {
