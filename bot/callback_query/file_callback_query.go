@@ -192,7 +192,7 @@ func sendDownloadMessage(infoHash string, fileIndex int, t *t.Torrent, premium s
 	if !ok {
 		messageText := `
 #{info_hash}
-#{torrent_name}
+{torrent_name}
 		`
 		messageText = strings.ReplaceAll(messageText, "{info_hash}", infoHash)
 		messageText = strings.ReplaceAll(messageText, "{torrent_name}", t.Info().Name)
