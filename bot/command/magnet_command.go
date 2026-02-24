@@ -101,8 +101,9 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	}
 
 	// 获取文件列表
+	const maxButtons = 50
 	files := info.Files
-	filesFirstPage := files[:min(100, len(files))]
+	filesFirstPage := files[:min(maxButtons, len(files))]
 
 	// 发送第一页成功消息
 	successMessage := i18n.Text(i18n.MagnetSuccessMessageCode, user.Language)
@@ -118,8 +119,8 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	bot.Send(editMsg)
 
 	// 发送后续页成功消息
-	for i := 100; i < len(files); i += 100 {
-		filesPage := files[i:min(i+100, len(files))]
+	for i := maxButtons; i < len(files); i += maxButtons {
+		filesPage := files[i:min(i+maxButtons, len(files))]
 		successMessage = i18n.Text(i18n.MagnetSuccessMessageCode, user.Language)
 		successMessage = i18n.Replace(successMessage, map[string]string{
 			i18n.MagnetMessagePlaceholderMagnetLink: magnetLink,
@@ -188,7 +189,6 @@ func fileList(files []model.TorrentFile) []string {
 
 // createFileButtons 创建文件按钮（多按钮同行）
 func createFileButtons(files []model.TorrentFile, infoHash string) *tgbotapi.InlineKeyboardMarkup {
-	const maxButtons = 100   // Telegram 限制每个键盘最多 100 个按钮，这里设置 100 个文件按钮
 	const buttonsPerRow = 10 // 每行显示的按钮数
 
 	var buttons [][]tgbotapi.InlineKeyboardButton
