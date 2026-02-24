@@ -34,7 +34,7 @@ func SelfCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 		i18n.SelfMessagePlaceholderUserName:              userName,
 		i18n.SelfMessagePlaceholderUUID:                  user.UUID,
 		i18n.SelfMessagePlaceholderLanguage:              user.Language,
-		i18n.SelfMessagePlaceholderDailyDownloadRemain:   strconv.Itoa(permissions.DailyDownloadQuantity),
+		i18n.SelfMessagePlaceholderDailyDownloadRemain:   strconv.Itoa(permissions.DailyDownloadRemain),
 		i18n.SelfMessagePlaceholderAsyncDownloadQuantity: strconv.Itoa(permissions.AsyncDownloadQuantity),
 		i18n.SelfMessagePlaceholderDailyDownloadQuantity: strconv.Itoa(permissions.DailyDownloadQuantity),
 		i18n.SelfMessagePlaceholderFileDownloadSize:      utils.FormatBytesToSizeString(permissions.FileDownloadSize),
