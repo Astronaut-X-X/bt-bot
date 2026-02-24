@@ -58,6 +58,7 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	var info *model.Torrent
 	var errParse error
 	go func() {
+		log.Println("======================= parseMagnetLink ========================", magnetLink)
 		info, errParse = parseMagnetLink(ctx, magnetLink)
 	}()
 

@@ -30,6 +30,7 @@ type DownloadParams struct {
 
 func Download(params DownloadParams) {
 	magnetLink := fmt.Sprintf("magnet:?xt=urn:btih:%s", params.InfoHash)
+	log.Println("======================= download file ========================", magnetLink)
 
 	// 创建下载上下文
 	downloadCtx, downloadCancel := context.WithCancel(context.Background())
