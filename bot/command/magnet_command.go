@@ -116,7 +116,9 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 		i18n.MagnetMessagePlaceholderFileList:   strings.Join(fileList(filesFirstPage), "\n"),
 	})
 	editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, successMessage)
-	editMsg.ReplyMarkup = createFileButtons(filesFirstPage, info.InfoHash)
+	replyMarkup := createFileButtons(filesFirstPage, info.InfoHash)
+	replyMarkup.InlineKeyboard = append([][]tgbotapi.InlineKeyboardButton{allFileButton(info.InfoHash)}, replyMarkup.InlineKeyboard...)
+	editMsg.ReplyMarkup = replyMarkup
 	bot.Send(editMsg)
 
 	// 发送后续页成功消息
@@ -186,6 +188,13 @@ func fileList(files []model.TorrentFile) []string {
 		fileList = append(fileList, fileLine)
 	}
 	return fileList
+}
+
+func allFileButton(infoHash string) []tgbotapi.InlineKeyboardButton {
+	button := []tgbotapi.InlineKeyboardButton{
+		tgbotapi.NewInlineKeyboardButtonData("All files", "file_"+infoHash+"_-1"),
+	}
+	return button
 }
 
 // createFileButtons 创建文件按钮（多按钮同行）
