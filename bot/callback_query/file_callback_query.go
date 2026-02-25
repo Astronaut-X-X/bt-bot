@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	t "github.com/anacrolix/torrent"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -78,7 +79,13 @@ func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	messageID := message.MessageID
 
 	// 下载进度
+	startTime := time.Now()
 	progressCallback := func(params torrent.ProgressParams) {
+		elapsedTime := time.Since(startTime)
+		hours := int(elapsedTime.Hours())
+		minutes := int(elapsedTime.Minutes()) % 60
+		seconds := int(elapsedTime.Seconds()) % 60
+		elapsedTimeString := fmt.Sprintf("%02d:%02d:%02d", hours, minutes, seconds)
 		message := i18n.Text(i18n.DownloadProcessingMessageCode, user.Language)
 		message = i18n.Replace(message, map[string]string{
 			i18n.DownloadMessagePlaceholderMagnet:         infoHash,
@@ -86,6 +93,7 @@ func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 			i18n.DownloadMessagePlaceholderPercent:        utils.FormatPercentage(params.BytesCompleted, params.TotalBytes),
 			i18n.DownloadMessagePlaceholderBytesCompleted: utils.FormatBytesToSizeString(params.BytesCompleted),
 			i18n.DownloadMessagePlaceholderTotalBytes:     utils.FormatBytesToSizeString(params.TotalBytes),
+			i18n.DownloadMessagePlaceholderElapsedTime:    elapsedTimeString,
 		})
 		newEditMessage := tgbotapi.NewEditMessageText(chatID, messageID, message)
 		newEditMessage.ReplyMarkup = stopDownloadReplyMarkup(infoHash, fileIndex, user.Language)

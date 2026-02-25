@@ -18,6 +18,7 @@ const (
 	DownloadMessagePlaceholderBytesCompleted  = "{bytes_completed}"
 	DownloadMessagePlaceholderTotalBytes      = "{total_bytes}"
 	DownloadMessagePlaceholderDownloadChannel = "{download_channel}"
+	DownloadMessagePlaceholderElapsedTime     = "{elapsed_time}"
 )
 
 const (
@@ -54,7 +55,10 @@ const (
 	DownloadProcessingMessageZH = `
 ⌛ 文件下载中...
 
-🔗 Magent: {magnet}
+⚠️ 若资源过冷门，可能会等待较长时间或无法完成下载。
+
+🔗 磁力链接: {magnet}
+⏱️ 当前耗时: {elapsed_time}
 💾 正在下载文件：
 [{percent}({bytes_completed}/{total_bytes})] {download_files}
 `
@@ -62,7 +66,10 @@ const (
 	DownloadProcessingMessageEN = `
 ⌛ Downloading file...
 
+⚠️ If the resource is unpopular, it may take a long time or cannot be completed.
+
 🔗 Magnet: {magnet}
+⏱️ Elapsed time: {elapsed_time}
 💾 Downloading:
 [{percent}({bytes_completed}/{total_bytes})] {download_files}
 `
