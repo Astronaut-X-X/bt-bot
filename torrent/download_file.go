@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strings"
 	"sync"
 	"time"
 
@@ -30,7 +29,7 @@ type DownloadParams struct {
 }
 
 func Download(params DownloadParams) {
-	magnetLink := fmt.Sprintf("magnet:?xt=urn:btih:%s", strings.ToUpper(params.InfoHash))
+	magnetLink := fmt.Sprintf("magnet:?xt=urn:btih:%s", params.InfoHash)
 
 	// 创建下载上下文
 	downloadCtx, downloadCancel := context.WithCancel(context.Background())

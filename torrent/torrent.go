@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -53,8 +54,28 @@ func CloseTorrentClient() error {
 	return nil
 }
 
-func ParseMagnetLink(ctx context.Context, magnet string) (*torrent.Torrent, error) {
+// normalizeMagnetLink 将 magnet 中的 infohash 转为 anacrolix/torrent 可接受的格式。
+// 库对 32 字符的 base32 使用 base32.StdEncoding（仅支持大写 A-Z 和 2-7），小写会报错。
+func normalizeMagnetLink(magnet string) string {
+	const prefix = "urn:btih:"
+	i := strings.Index(magnet, prefix)
+	if i == -1 {
+		return magnet
+	}
+	start := i + len(prefix)
+	end := start
+	for end < len(magnet) && magnet[end] != '&' {
+		end++
+	}
+	infohash := magnet[start:end]
+	if len(infohash) == 32 {
+		return magnet[:start] + strings.ToUpper(infohash) + magnet[end:]
+	}
+	return magnet
+}
 
+func ParseMagnetLink(ctx context.Context, magnet string) (*torrent.Torrent, error) {
+	magnet = normalizeMagnetLink(magnet)
 	t, err := globalClient.AddMagnet(magnet)
 	if err != nil {
 		return nil, err
