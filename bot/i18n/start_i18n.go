@@ -3,9 +3,10 @@ package i18n
 const (
 	StartMessageCode = "start_message"
 
-	StartMessagePlaceholderUserName        = "{bot_user_name}"
-	StartMessagePlaceholderDownloadChannel = "{download_channel}"
-	StartMessagePlaceholderHelpChannel     = "{help_channel}"
+	StartMessagePlaceholderUserName           = "{bot_user_name}"
+	StartMessagePlaceholderDownloadChannel    = "{download_channel}"
+	StartMessagePlaceholderHelpChannel        = "{help_channel}"
+	StartMessagePlaceholderCooperationContact = "{cooperation_contact}"
 )
 
 const (
@@ -21,7 +22,7 @@ Hi,  {bot_user_name}
 直接发送 magent 即可开始解析
 如：magnet:?xt=urn:btih:E7FC73D9E20697C6C440203F5884EF52F9E4BD28
 
- 免责声明：
+免责声明：
 - 只提供解析下载功能，下载内容与本Bot无关
 - 不存储内容，只提供下载，请自行判断内容真实性与合规性
 - 违规内容请在帮助反馈频道反馈，我们会及时处理
@@ -29,6 +30,8 @@ Hi,  {bot_user_name}
 Bot频道：
 下载文件频道：{download_channel}
 帮助反馈频道：{help_channel}	
+
+合作联系：{cooperation_contact}
 `
 
 	StartMessageEN = `
@@ -52,5 +55,7 @@ Disclaimer:
 Bot channel:
 Download file channel: {download_channel}
 Help feedback channel: {help_channel}	
+
+Cooperation contact: {cooperation_contact}
 `
 )

@@ -20,9 +20,10 @@ func StartCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	}
 
 	message := i18n.Replace(i18n.Text(i18n.StartMessageCode, user.Language), map[string]string{
-		i18n.StartMessagePlaceholderUserName:        userName,
-		i18n.StartMessagePlaceholderDownloadChannel: "@tgqpXOZ2tzXN",
-		i18n.StartMessagePlaceholderHelpChannel:     "@bt1bot1channel",
+		i18n.StartMessagePlaceholderUserName:           userName,
+		i18n.StartMessagePlaceholderDownloadChannel:    "@tgqpXOZ2tzXN",
+		i18n.StartMessagePlaceholderHelpChannel:        "@bt1bot1channel",
+		i18n.StartMessagePlaceholderCooperationContact: "@IIAlbertEinsteinII",
 	})
 
 	reply := tgbotapi.NewMessage(chatID, message)
