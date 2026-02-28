@@ -50,7 +50,7 @@ func Download(params DownloadParams) {
 	// 获取文件列表
 	files := t.Files()
 	filename := ""
-	var targetFile *torrent.File
+	var targetFiles []*torrent.File
 	if params.FileIndex == -1 {
 		for i := range files {
 			files[i].SetPriority(torrent.PiecePriorityNormal)
@@ -61,26 +61,29 @@ func Download(params DownloadParams) {
 		for i := range files {
 			if HasImageExtension(files[i].DisplayPath()) {
 				files[i].SetPriority(torrent.PiecePriorityNormal)
+				targetFiles = append(targetFiles, files[i])
+				totalLength += files[i].Length()
 			}
 		}
 		filename = "All images"
-		totalLength = t.Info().TotalLength()
 	} else if params.FileIndex == -3 {
 		for i := range files {
 			if HasVideoExtension(files[i].DisplayPath()) {
 				files[i].SetPriority(torrent.PiecePriorityNormal)
+				targetFiles = append(targetFiles, files[i])
+				totalLength += files[i].Length()
 			}
 		}
 		filename = "All videos"
-		totalLength = t.Info().TotalLength()
 	} else {
 		for i := range files {
 			files[i].SetPriority(torrent.PiecePriorityNone)
 		}
-		targetFile = files[params.FileIndex]
+		targetFile := files[params.FileIndex]
 		targetFile.SetPriority(torrent.PiecePriorityNormal)
 		filename = targetFile.DisplayPath()
 		totalLength = targetFile.Length()
+		targetFiles = append(targetFiles, targetFile)
 	}
 	t.DownloadAll()
 
@@ -113,8 +116,13 @@ func Download(params DownloadParams) {
 			bytesCompleted := int64(0)
 			if params.FileIndex == -1 {
 				bytesCompleted = t.BytesCompleted()
+			} else if params.FileIndex == -2 ||
+				params.FileIndex == -3 {
+				for _, file := range targetFiles {
+					bytesCompleted += file.BytesCompleted()
+				}
 			} else {
-				bytesCompleted = targetFile.BytesCompleted()
+				bytesCompleted = targetFiles[params.FileIndex].BytesCompleted()
 			}
 
 			// 查询下载进度
