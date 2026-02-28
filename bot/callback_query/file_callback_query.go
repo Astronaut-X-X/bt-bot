@@ -218,7 +218,7 @@ func sendDownloadMessage(infoHash string, fileIndex int, t *t.Torrent, premium s
 		filesText := ""
 		for index, file := range files {
 			filesText += fmt.Sprintf("%s %d. %s (%s)\n", emojifyFilename(file.DisplayPath(t.Info())), index+1, file.DisplayPath(t.Info()), utils.FormatBytesToSizeString(file.Length))
-			if index%48 == 0 {
+			if (index+1)%48 == 0 {
 				telegram.SendCommentMessageText(filesText, int(messageId))
 				filesText = ""
 			}
