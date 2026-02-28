@@ -184,6 +184,10 @@ func stopDownloadReplyMarkup(infoHash string, fileIndex int, language string) *t
 func parseFileName(t *t.Torrent, fileIndex int) string {
 	if fileIndex == -1 {
 		return "All files"
+	} else if fileIndex == -2 {
+		return "All images"
+	} else if fileIndex == -3 {
+		return "All videos"
 	}
 	files := t.Files()
 	if fileIndex < 0 || fileIndex >= len(files) {
