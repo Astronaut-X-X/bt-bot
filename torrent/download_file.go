@@ -63,6 +63,8 @@ func Download(params DownloadParams) {
 				files[i].SetPriority(torrent.PiecePriorityNormal)
 				targetFiles = append(targetFiles, files[i])
 				totalLength += files[i].Length()
+			} else {
+				files[i].SetPriority(torrent.PiecePriorityNone)
 			}
 		}
 		filename = "All images"
@@ -72,6 +74,8 @@ func Download(params DownloadParams) {
 				files[i].SetPriority(torrent.PiecePriorityNormal)
 				targetFiles = append(targetFiles, files[i])
 				totalLength += files[i].Length()
+			} else {
+				files[i].SetPriority(torrent.PiecePriorityNone)
 			}
 		}
 		filename = "All videos"
