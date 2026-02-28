@@ -256,6 +256,18 @@ func sendDownloadComment(infoHash string, fileIndex int, t *t.Torrent, messageId
 				filePaths = append(filePaths, filepath.Join(downloadDir, file.DisplayPath(t.Info())))
 			}
 		}
+	} else if fileIndex == -2 {
+		for _, file := range t.Info().Files {
+			if torrent.HasImageExtension(file.DisplayPath(t.Info())) {
+				filePaths = append(filePaths, filepath.Join(downloadDir, file.DisplayPath(t.Info())))
+			}
+		}
+	} else if fileIndex == -3 {
+		for _, file := range t.Info().Files {
+			if torrent.HasVideoExtension(file.DisplayPath(t.Info())) {
+				filePaths = append(filePaths, filepath.Join(downloadDir, file.DisplayPath(t.Info())))
+			}
+		}
 	} else {
 		file := t.Info().Files[fileIndex]
 		filePaths = append(filePaths, filepath.Join(downloadDir, file.DisplayPath(t.Info())))
