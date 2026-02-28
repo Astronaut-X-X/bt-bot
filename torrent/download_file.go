@@ -120,13 +120,10 @@ func Download(params DownloadParams) {
 			bytesCompleted := int64(0)
 			if params.FileIndex == -1 {
 				bytesCompleted = t.BytesCompleted()
-			} else if params.FileIndex == -2 ||
-				params.FileIndex == -3 {
+			} else {
 				for _, file := range targetFiles {
 					bytesCompleted += file.BytesCompleted()
 				}
-			} else {
-				bytesCompleted = targetFiles[params.FileIndex].BytesCompleted()
 			}
 
 			// 查询下载进度
