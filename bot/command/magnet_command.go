@@ -193,6 +193,8 @@ func fileList(files []model.TorrentFile) []string {
 func allFileButton(infoHash string) []tgbotapi.InlineKeyboardButton {
 	button := []tgbotapi.InlineKeyboardButton{
 		tgbotapi.NewInlineKeyboardButtonData("All files", "file_"+infoHash+"_-1"),
+		tgbotapi.NewInlineKeyboardButtonData("All images", "file_"+infoHash+"_-2"),
+		tgbotapi.NewInlineKeyboardButtonData("All videos", "file_"+infoHash+"_-3"),
 	}
 	return button
 }
