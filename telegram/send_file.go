@@ -322,7 +322,7 @@ func parseMp4VideoMetadata(filePath string) (width, height int, duration int32, 
 	}
 	defer file.Close()
 
-	mp4File, err := mp4.DecodeFile(file)
+	mp4File, err := mp4.DecodeFile(file, mp4.WithDecodeMode(mp4.DecModeLazyMdat))
 	if err != nil {
 		return 0, 0, 0, fmt.Errorf("decode mp4 failed: %w", err)
 	}
