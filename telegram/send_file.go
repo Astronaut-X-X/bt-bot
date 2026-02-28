@@ -219,8 +219,8 @@ func SendCommentMessage(path string, msgId int) error {
 	case ".mp4":
 		width, height, duration, err := parseMp4VideoMetadata(path)
 		if err != nil {
-			log.Println("failed to parse mp4 video metadata:", err)
-			return err
+			log.Println("failed to parse mp4 video metadata, using defaults:", err)
+			width, height, duration = 1920, 1080, 60
 		}
 		sendMsg.Media = &tg.InputMediaUploadedDocument{
 			Attributes: []tg.DocumentAttributeClass{
