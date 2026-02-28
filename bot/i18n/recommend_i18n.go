@@ -3,13 +3,17 @@ package i18n
 const (
 	RecommendMessageCode = "recommend_message"
 
-	RecommendMessagePlaceholderGroupChannel = "{group_channel}"
+	RecommendMessagePlaceholderGroupChannel  = "{group_channel}"
+	RecommendMessagePlaceholderSearchWebsite = "{search_website}"
 )
 
 const (
 	RecommendMessageZH = `
-推荐群组频道：
+🔍 推荐群组频道：
 {group_channel}
+
+⬇️ 找资源磁力搜索网站 
+{search_website}
 
 免责声明：
 - 只提供解析下载功能，下载内容与本Bot无关
@@ -17,8 +21,11 @@ const (
 - 违规内容请在帮助反馈频道反馈，我们会及时处理
 `
 	RecommendMessageEN = `
-Recommended group channels:
+🔍 Recommended group channels:
 {group_channel}
+
+⬇️ Search website:
+{search_website}
 
 Disclaimer:
 - Only provide parsing and download functionality, the content of the downloaded content is not related to this Bot

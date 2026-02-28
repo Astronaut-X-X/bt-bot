@@ -7,6 +7,8 @@ const (
 	StartMessagePlaceholderDownloadChannel    = "{download_channel}"
 	StartMessagePlaceholderHelpChannel        = "{help_channel}"
 	StartMessagePlaceholderCooperationContact = "{cooperation_contact}"
+	StartMessagePlaceholderGroupChannel       = "{group_channel}"
+	StartMessagePlaceholderSearchWebsite      = "{search_website}"
 )
 
 const (
@@ -27,6 +29,12 @@ Hi,  {bot_user_name}
 - 不存储内容，只提供下载，请自行判断内容真实性与合规性
 - 违规内容请在帮助反馈频道反馈，我们会及时处理
 
+🔍 推荐群组频道：
+{group_channel}
+
+⬇️ 找资源磁力搜索网站 
+{search_website}
+
 Bot频道：
 下载文件频道：{download_channel}
 帮助反馈频道：{help_channel}	
@@ -46,6 +54,12 @@ Welcome to BtBot 🤖
 ⌨️ Usage:
 Send magnet to start parsing
 如：magnet:?xt=urn:btih:E7FC73D9E20697C6C440203F5884EF52F9E4BD28
+
+🔍 Recommended group channels:
+{group_channel}
+
+⬇️ Search website:
+{search_website}
 
 Disclaimer:
 - Only provide parsing and download functionality, the content of the downloaded content is not related to this Bot
