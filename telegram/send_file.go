@@ -267,7 +267,15 @@ func uploadFile(client *Client, path string) (tg.InputFileClass, error) {
 	up := uploader.NewUploader(client.API())
 	up.WithPartSize(524288)
 	up.WithThreads(5)
+	up.WithProgress(&UploadProgress{})
 	return up.FromFile(context.TODO(), file)
+}
+
+type UploadProgress struct{}
+
+func (p *UploadProgress) Chunk(ctx context.Context, state uploader.ProgressState) error {
+	log.Println("upload progress:", state.Uploaded, state.Total)
+	return nil
 }
 
 func SendCommentMessageText(text string, msgId int) error {
