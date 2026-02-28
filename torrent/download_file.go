@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"sync"
 	"time"
 
@@ -55,6 +56,22 @@ func Download(params DownloadParams) {
 			files[i].SetPriority(torrent.PiecePriorityNormal)
 		}
 		filename = "All files"
+		totalLength = t.Info().TotalLength()
+	} else if params.FileIndex == -2 {
+		for i := range files {
+			if HasImageExtension(files[i].DisplayPath()) {
+				files[i].SetPriority(torrent.PiecePriorityNormal)
+			}
+		}
+		filename = "All images"
+		totalLength = t.Info().TotalLength()
+	} else if params.FileIndex == -3 {
+		for i := range files {
+			if HasVideoExtension(files[i].DisplayPath()) {
+				files[i].SetPriority(torrent.PiecePriorityNormal)
+			}
+		}
+		filename = "All videos"
 		totalLength = t.Info().TotalLength()
 	} else {
 		for i := range files {
@@ -128,4 +145,26 @@ func estimatedDownloadTime(totalLength int64) time.Duration {
 		estimatedTime = 6 * time.Hour
 	}
 	return estimatedTime
+}
+
+func HasImageExtension(path string) bool {
+	return strings.HasSuffix(path, ".jpg") ||
+		strings.HasSuffix(path, ".jpeg") ||
+		strings.HasSuffix(path, ".png") ||
+		strings.HasSuffix(path, ".gif") ||
+		strings.HasSuffix(path, ".webp") ||
+		strings.HasSuffix(path, ".bmp") ||
+		strings.HasSuffix(path, ".tiff") ||
+		strings.HasSuffix(path, ".ico") ||
+		strings.HasSuffix(path, ".svg")
+}
+
+func HasVideoExtension(path string) bool {
+	return strings.HasSuffix(path, ".mp4") ||
+		strings.HasSuffix(path, ".avi") ||
+		strings.HasSuffix(path, ".mkv") ||
+		strings.HasSuffix(path, ".mov") ||
+		strings.HasSuffix(path, ".wmv") ||
+		strings.HasSuffix(path, ".flv") ||
+		strings.HasSuffix(path, ".webm")
 }

@@ -7,3 +7,10 @@ type TorrentFile struct {
 	Path      string `gorm:"column:path;"`
 	PathUtf8  string `gorm:"column:path_utf8;"`
 }
+
+func (file *TorrentFile) DisplayPath() string {
+	if file.PathUtf8 != "" {
+		return file.PathUtf8
+	}
+	return file.Path
+}

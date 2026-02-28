@@ -3,6 +3,7 @@ package callback_query
 import (
 	"bt-bot/bot/common"
 	"bt-bot/bot/i18n"
+	"bt-bot/database/model"
 	"bt-bot/telegram"
 	"bt-bot/torrent"
 	"bt-bot/utils"
@@ -49,15 +50,13 @@ func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	}
 
 	// 文件下载大小限制
-	// TODO
 	torrentInfo, err := common.GetTorrentInfo(infoHash)
 	if err != nil {
 		log.Println("get torrent info error", err)
 		common.SendErrorMessage(bot, chatID, user.Language, err)
 		return
 	}
-	if fileIndex == -1 && torrentInfo.TotalLength() > permissions.FileDownloadSize ||
-		fileIndex != -1 && torrentInfo.Files[fileIndex].Length > permissions.FileDownloadSize {
+	if checkOverDownloadSize(infoHash, fileIndex, torrentInfo, permissions) {
 		messageText := i18n.Text(i18n.DownloadFileDownloadSizeNotEnoughMessageCode, user.Language)
 		reply := tgbotapi.NewMessage(chatID, messageText)
 		bot.Send(reply)
@@ -349,5 +348,30 @@ func emojifyFilename(filename string) string {
 		return emoji
 	} else {
 		return "📄"
+	}
+}
+
+func checkOverDownloadSize(infoHash string, fileIndex int, torrentInfo *model.Torrent, permissions *model.Permissions) bool {
+	switch fileIndex {
+	case -1:
+		return torrentInfo.TotalLength() > permissions.FileDownloadSize
+	case -2:
+		totalLength := int64(0)
+		for _, file := range torrentInfo.Files {
+			if torrent.HasImageExtension(file.DisplayPath()) {
+				totalLength += file.Length
+			}
+		}
+		return totalLength > permissions.FileDownloadSize
+	case -3:
+		totalLength := int64(0)
+		for _, file := range torrentInfo.Files {
+			if torrent.HasVideoExtension(file.DisplayPath()) {
+				totalLength += file.Length
+			}
+		}
+		return totalLength > permissions.FileDownloadSize
+	default:
+		return torrentInfo.Files[fileIndex].Length > permissions.FileDownloadSize
 	}
 }
