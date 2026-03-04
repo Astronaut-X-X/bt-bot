@@ -45,7 +45,7 @@ func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	infoHash, fileIndex, err := parseFileCallbackQueryData(data)
 	if err != nil {
 		log.Println("parse file callback query data error", err)
-		bot.Send(tgbotapi.NewMessage(chatID, "❌ invalid download file data"))
+		common.SendWithRetry(bot, tgbotapi.NewMessage(chatID, "❌ invalid download file data"))
 		return
 	}
 
@@ -59,7 +59,7 @@ func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	if checkOverDownloadSize(infoHash, fileIndex, torrentInfo, permissions) {
 		messageText := i18n.Text(i18n.DownloadFileDownloadSizeNotEnoughMessageCode, user.Language)
 		reply := tgbotapi.NewMessage(chatID, messageText)
-		bot.Send(reply)
+		common.SendWithRetry(bot, reply)
 		return
 	}
 
@@ -70,7 +70,7 @@ func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	})
 	newMessage := tgbotapi.NewMessage(chatID, startMessage)
 	newMessage.ReplyMarkup = stopDownloadReplyMarkup(infoHash, fileIndex, user.Language)
-	message, err := bot.Send(newMessage)
+	message, err := common.SendWithRetry(bot, newMessage)
 	if err != nil {
 		log.Println("send start message error", err)
 		return
@@ -96,7 +96,7 @@ func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 		})
 		newEditMessage := tgbotapi.NewEditMessageText(chatID, messageID, message)
 		newEditMessage.ReplyMarkup = stopDownloadReplyMarkup(infoHash, fileIndex, user.Language)
-		bot.Send(newEditMessage)
+		common.SendWithRetry(bot, newEditMessage)
 	}
 
 	// 下载取消
@@ -108,7 +108,7 @@ func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 			i18n.DownloadMessagePlaceholderDownloadFiles: parseFileName(t, fileIndex),
 		})
 		newEditMessage := tgbotapi.NewEditMessageText(chatID, messageID, message)
-		bot.Send(newEditMessage)
+		common.SendWithRetry(bot, newEditMessage)
 	}
 
 	// 下载超时
@@ -120,7 +120,7 @@ func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 			i18n.DownloadMessagePlaceholderDownloadFiles: parseFileName(t, fileIndex),
 		})
 		newEditMessage := tgbotapi.NewEditMessageText(chatID, messageID, message)
-		bot.Send(newEditMessage)
+		common.SendWithRetry(bot, newEditMessage)
 	}
 
 	// 下载成功
@@ -131,7 +131,7 @@ func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 			i18n.DownloadMessagePlaceholderMagnet:        infoHash,
 			i18n.DownloadMessagePlaceholderDownloadFiles: parseFileName(t, fileIndex),
 		})
-		bot.Send(tgbotapi.NewEditMessageText(chatID, messageID, message))
+		common.SendWithRetry(bot, tgbotapi.NewEditMessageText(chatID, messageID, message))
 
 		// 发送下载消息
 		sendDownloadMessage(infoHash, fileIndex, t, user.Premium)
@@ -143,7 +143,7 @@ func FileCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 			i18n.DownloadMessagePlaceholderDownloadFiles:   parseFileName(t, fileIndex),
 			i18n.DownloadMessagePlaceholderDownloadChannel: "@tgqpXOZ2tzXN",
 		})
-		bot.Send(tgbotapi.NewEditMessageText(chatID, messageID, message))
+		common.SendWithRetry(bot, tgbotapi.NewEditMessageText(chatID, messageID, message))
 	}
 
 	params := torrent.DownloadParams{

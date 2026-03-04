@@ -25,7 +25,7 @@ func StopCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	infoHash, fileIndex, err := parseStopCallbackQueryData(data)
 	if err != nil {
 		log.Println("parse stop callback query data error", err)
-		bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "❌ invalid stop download data"))
+		common.SendWithRetry(bot, tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "❌ invalid stop download data"))
 		return
 	}
 
@@ -36,7 +36,7 @@ func StopCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 			update.CallbackQuery.Message.MessageID,
 			i18n.Text(i18n.ErrorStopDownloadMessageCode, user.Language),
 		)
-		bot.Send(editMsg)
+		common.SendWithRetry(bot, editMsg)
 	}
 }
 

@@ -26,7 +26,7 @@ func StopMagnetCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Updat
 	infoHash, userId, err := parseStopMagnetCallbackQueryData(data)
 	if err != nil {
 		log.Println("parse stop magnet callback query data error", err)
-		bot.Send(tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "❌ invalid stop magnet data"))
+		common.SendWithRetry(bot, tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "❌ invalid stop magnet data"))
 	}
 
 	ok := torrent.TorrentCancel(infoHash, userId)
@@ -36,7 +36,7 @@ func StopMagnetCallbackQueryHandler(bot *tgbotapi.BotAPI, update *tgbotapi.Updat
 			update.CallbackQuery.Message.MessageID,
 			i18n.Text(i18n.ErrorStopMagnetMessageCode, user.Language),
 		)
-		bot.Send(editMsg)
+		common.SendWithRetry(bot, editMsg)
 	}
 }
 

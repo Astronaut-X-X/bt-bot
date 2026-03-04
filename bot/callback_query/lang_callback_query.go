@@ -36,7 +36,7 @@ func LangCallbackQueryHandler(bot *tgbotapi.BotAPI, udpate *tgbotapi.Update) {
 	message := tgbotapi.NewEditMessageText(udpate.CallbackQuery.Message.Chat.ID, udpate.CallbackQuery.Message.MessageID, text)
 	message.ReplyMarkup = startReplyMarkup()
 
-	if _, err := bot.Send(message); err != nil {
+	if _, err := common.SendWithRetry(bot, message); err != nil {
 		log.Println("Send lang callback query message error:", err)
 	}
 }

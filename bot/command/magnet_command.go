@@ -35,7 +35,7 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 			i18n.MagnetMessagePlaceholderMagnetLink: msg.Text,
 		})
 		reply := tgbotapi.NewMessage(chatID, message)
-		bot.Send(reply)
+		common.SendWithRetry(bot, reply)
 		return
 	}
 	infoHash := torrent.ExtractTorrentInfoHash(magnetLink)
@@ -49,7 +49,7 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 		i18n.MagnetMessagePlaceholderElapsedTime: "--:--:--",
 	})
 	processingMsg := tgbotapi.NewMessage(chatID, processingMessage)
-	sentMsg, _ := bot.Send(processingMsg)
+	sentMsg, _ := common.SendWithRetry(bot, processingMsg)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	torrent.SetTorrentCancel(infoHash, userID, cancel)
@@ -77,7 +77,7 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 		})
 		editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, processingMessage)
 		editMsg.ReplyMarkup = stopMagnetReplyMarkup(infoHash, userID, user.Language)
-		if _, err := bot.Send(editMsg); err != nil {
+		if _, err := common.SendWithRetry(bot, editMsg); err != nil {
 			log.Println("Send magnet processing message error:", err)
 		}
 
@@ -97,7 +97,7 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 			i18n.MagnetMessagePlaceholderTimeout:      strconv.Itoa(int(torrent.MagnetTimeout)),
 		})
 		editMsg := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, errorMessage)
-		bot.Send(editMsg)
+		common.SendWithRetry(bot, editMsg)
 		return
 	}
 
@@ -119,7 +119,7 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 	replyMarkup := createFileButtons(filesFirstPage, info.InfoHash)
 	replyMarkup.InlineKeyboard = append([][]tgbotapi.InlineKeyboardButton{allFileButton(info.InfoHash)}, replyMarkup.InlineKeyboard...)
 	editMsg.ReplyMarkup = replyMarkup
-	bot.Send(editMsg)
+	common.SendWithRetry(bot, editMsg)
 
 	// 发送后续页成功消息
 	for i := maxButtons; i < len(files); i += maxButtons {
@@ -135,7 +135,7 @@ func MagnetCommand(bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
 
 		message := tgbotapi.NewMessage(chatID, successMessage)
 		message.ReplyMarkup = createFileButtons(filesPage, info.InfoHash)
-		bot.Send(message)
+		common.SendWithRetry(bot, message)
 	}
 }
 
